@@ -45,24 +45,6 @@ class BoardView:
     def draw_board(self, win):
         for rank in range(8):
             for file in range(8):
-
-                # Map logical square → screen square
-                if self.controller.white_on_bottom:
-                    row = 7 - rank
-                    col = file
-                else:
-                    row = rank
-                    col = 7 - file
-
-                # Square color (DO NOT flip this)
-                if (rank + file) % 2 == 1:
-                    color = WHITE_SQUARE_COLOR
-                else:
-                    color = BLACK_SQUARE_COLOR
-
-                pg.draw.rect(win, color,(self.x + col * SQUARE_SIZE, self.y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
-        for rank in range(8):
-            for file in range(8):
                 
                 # Map logical square → screen square
                 if self.controller.white_on_bottom:
