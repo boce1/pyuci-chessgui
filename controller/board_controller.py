@@ -2,6 +2,7 @@ import chess
 import chess.engine as engine
 import os
 import pygame as pg
+import threading
 from config import *
 
 class BoardController:
@@ -12,6 +13,7 @@ class BoardController:
         self.white_on_bottom = True # Default orientation
         self.source_square = None
         self.legal_moves_for_source_square = []
+        self.is_engine_thinking = False
 
     def load_engine(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -71,6 +73,10 @@ class BoardController:
             self.legal_moves_for_source_square = [move for move in all_legal_moves if move.from_square == self.source_square]
 
     def handle_click(self, event, mouse_pos):
+        if self.white_on_bottom and self.board.turn == chess.BLACK:
+            return
+        if self.white_on_bottom == False and self.board.turn == chess.WHITE:
+            return
         if not self.is_left_mouse_button_down(event):
             return
 
@@ -116,9 +122,38 @@ class BoardController:
                     self.source_square = None
                     self.legal_moves_for_source_square = []
 
+    def engine_make_move(self):
+        # Only start the engine if its the engines turn and not already thinking
+        if (self.white_on_bottom and self.board.turn == chess.BLACK or 
+            not self.white_on_bottom and self.board.turn == chess.WHITE) \
+            and not self.is_engine_thinking:
+            if self.engine is None:
+                return
+
+            self.is_engine_thinking = True
+            # Create a thread to run the calculation
+            engine_thread = threading.Thread(target=self.run_engine)
+            engine_thread.daemon = True  # Ensures thread dies if main program exits
+            engine_thread.start()
+
+    def run_engine(self):
+        """ This runs in the background thread """
+        try:
+            # The engine calculates here (GUI stays responsive)
+            result = self.engine.play(self.board, chess.engine.Limit(time=1.0)) # Reduced time for testing
+
+            if result.move is not None:
+                # Important: We push the move back to the board
+                self.board.push(result.move)
+        finally:
+            # Reset the flag so the engine can move again next turn
+            self.is_engine_thinking = False
+
     def change_turn(self):
         self.board.turn = not self.board.turn
 
     def shut_down_engine(self):
         if self.engine:
             self.engine.quit()
+
+    

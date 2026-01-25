@@ -15,7 +15,6 @@ class BoardView:
         self.load_pictures()
         pg.font.init()
         self.font = pg.font.SysFont('Consolas', int(SQUARE_SIZE * 0.3), bold=True)
-        self.white_on_bottom = True  # Default orientation
 
     def load_pictures(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -42,7 +41,7 @@ class BoardView:
         self.draw_pieces(win)
         self.show_files_ranks(win)
         self.draw_circle_indicating_turn(win)
-        pg.draw.rect(win, GRAY, (BOARD_X, BOARD_Y, BOARD_WIDTH, BOARD_HEIGHT), 3)
+        pg.draw.rect(win, GRAY, (BOARD_X, BOARD_Y, BOARD_WIDTH, BOARD_HEIGHT), 2)
 
     def draw_board(self, win):
         for rank in range(8):

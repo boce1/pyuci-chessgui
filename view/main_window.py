@@ -29,5 +29,6 @@ class MainWindow:
                 #self.board_view.controller.choose_target_square(event, mouse_pos)
                 self.board_view.controller.handle_click(event, mouse_pos)
             self.draw()
+            self.board_view.controller.engine_make_move()
         pg.quit()
         self.board_view.controller.shut_down_engine()
