@@ -25,9 +25,22 @@ class MainWindow:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     running = False
-                #self.board_view.controller.choose_source_square(event, mouse_pos)
-                #self.board_view.controller.choose_target_square(event, mouse_pos)
+
+                    if self.board_view.controller.current_analysis:
+                        try:
+                            self.board_view.controller.current_analysis.stop()
+                        except:
+                            print("Force stop analysis")
+
+                    if self.board_view.controller.engine:
+                        try:
+                            self.board_view.controller.stop_engine_immediately()
+                            #self.board_view.controller.engine.quit()
+                        except:
+                            print("Force stop engine")
+
                 self.board_view.controller.handle_click(event, mouse_pos)
+                self.board_view.controller.choose_promotion_piece(event, mouse_pos)
             self.draw()
             self.board_view.controller.engine_make_move()
         pg.quit()

@@ -3,6 +3,7 @@ import pygame as pg
 from controller import BoardController
 import os
 import chess
+from .promotion_table_view import PromotionTableView
 
 class BoardView:
     def __init__(self):
@@ -15,6 +16,7 @@ class BoardView:
         self.load_pictures()
         pg.font.init()
         self.font = pg.font.SysFont('Consolas', int(SQUARE_SIZE * 0.3), bold=True)
+        self.promotion_table = PromotionTableView()
 
     def load_pictures(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -41,7 +43,11 @@ class BoardView:
         self.draw_pieces(win)
         self.show_files_ranks(win)
         self.draw_circle_indicating_turn(win)
+        self.draw_square_in_check(win)
+
         pg.draw.rect(win, GRAY, (BOARD_X, BOARD_Y, BOARD_WIDTH, BOARD_HEIGHT), 2)
+
+        self.promotion_table.draw(win, self.controller.is_promoting, self.controller.board.turn)
 
     def draw_board(self, win):
         for rank in range(8):
@@ -136,3 +142,25 @@ class BoardView:
 
         pg.draw.circle(win, color, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS)
         pg.draw.circle(win, BLACK, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS, 2)
+
+    def draw_square_in_check(self, win):
+        # Check both colors because the turn changes immediately after a move
+        for color in [chess.WHITE, chess.BLACK]:
+            king_square = self.controller.board.king(color)
+
+            # is_check() is a shortcut to see if the king of the side whose turn it is is under attack
+            # But board.is_attacked_by is more precise for specific highlights
+            if king_square is not None:
+                # We check if the king of 'color' is attacked by the opposite color
+                if self.controller.board.is_attacked_by(not color, king_square):
+                    rank = king_square // 8
+                    file = king_square % 8
+
+                    if self.controller.white_on_bottom:
+                        row, col = 7 - rank, file
+                    else:
+                        row, col = rank, 7 - file
+
+                    # Using a thicker line or a semi-transparent surface looks better
+                    rect = (BOARD_X + col * SQUARE_SIZE, BOARD_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+                    pg.draw.rect(win, HIGHLIGHT_COLOR, rect, 5) # Explicit Red for Check

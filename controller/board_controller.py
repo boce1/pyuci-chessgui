@@ -4,16 +4,27 @@ import os
 import pygame as pg
 import threading
 from config import *
+from view.promotion_table_view import PromotionTableView
 
 class BoardController:
     def __init__(self):
-        self.board = chess.Board()
+        fen = chess.STARTING_FEN
+        #fen = check_fen  # For testing purposes
+        #fen =pawn_promotion_fen
+        self.board = chess.Board(fen)
         self.engine = None
         self.load_engine()
         self.white_on_bottom = True # Default orientation
         self.source_square = None
         self.legal_moves_for_source_square = []
         self.is_engine_thinking = False
+        self.current_analysis = None
+
+        self.pending_move_to_square = None
+        self.is_promoting = False
+        self.promotion_piece = None
+        self.promotion_table = PromotionTableView()
+
 
     def load_engine(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -72,11 +83,26 @@ class BoardController:
             all_legal_moves = list(self.board.legal_moves)
             self.legal_moves_for_source_square = [move for move in all_legal_moves if move.from_square == self.source_square]
 
+    def is_promotion(self, move):
+        piece = self.board.piece_at(move.from_square)
+        if piece and piece.piece_type == chess.PAWN:
+            if (piece.color == chess.WHITE and chess.square_rank(move.to_square) == 7) or \
+               (piece.color == chess.BLACK and chess.square_rank(move.to_square) == 0):
+                self.is_promoting = True
+                return
+        self.is_promoting = False
+        return
+
     def handle_click(self, event, mouse_pos):
+        # UNCOMMENT THESE LINES TO ENABLE ENGINE PLAY
+        # MAME SAM TI EBAL NE OTKOMENTIRASH LI GI
+        # --------------------------------------------
         if self.white_on_bottom and self.board.turn == chess.BLACK:
             return
         if self.white_on_bottom == False and self.board.turn == chess.WHITE:
             return
+        
+        
         if not self.is_left_mouse_button_down(event):
             return
 
@@ -98,6 +124,7 @@ class BoardController:
             if square == self.source_square:
                 self.source_square = None
                 self.get_legal_moves_for_source_square()
+                self.is_promoting = False
                 return
 
             # Check if the clicked square is one of the legal destinations
@@ -106,13 +133,22 @@ class BoardController:
                 if m.to_square == square:
                     move_to_make = m
                     break
-                
+            
+
             if move_to_make:
+                self.is_promotion(move_to_make)
+                if self.is_promoting:
+                    self.pending_move_to_square = square # Remember the target
+                    return # STOP HERE. Don't push to board yet.
+
                 self.board.push(move_to_make)
+
                 self.source_square = None # Reset for next move
                 self.legal_moves_for_source_square = []
+                self.is_promoting = False
             else:
                 # If user clicks a different piece of their own, change selection instead
+                self.is_promoting = False
                 new_piece = self.board.piece_at(square)
                 if new_piece and new_piece.color == self.board.turn:
                     self.source_square = square
@@ -121,6 +157,47 @@ class BoardController:
                     # Clicked an illegal square or empty space, deselect
                     self.source_square = None
                     self.legal_moves_for_source_square = []
+
+    def choose_promotion_piece(self, event, mouse_pos):
+        if self.white_on_bottom and self.board.turn == chess.BLACK:
+            return
+        if self.white_on_bottom == False and self.board.turn == chess.WHITE:
+            return
+
+        if not self.is_left_mouse_button_down(event):
+            return
+        x, y = mouse_pos
+        if x < PROMOTION_TABLE_X or x > PROMOTION_TABLE_X + PROMOTION_TABLE_WIDTH or \
+            y < PROMOTION_TABLE_Y or y > PROMOTION_TABLE_Y + PROMOTION_TABLE_CELL_WIDTH:
+            return
+        if not self.is_promoting:
+            self.promotion_piece = None
+            return
+        piece_index = (x - PROMOTION_TABLE_X) // PROMOTION_TABLE_CELL_WIDTH
+
+        if piece_index == 0:
+            self.promotion_piece = chess.QUEEN
+        elif piece_index == 1:
+            self.promotion_piece = chess.ROOK
+        elif piece_index == 2:
+            self.promotion_piece = chess.KNIGHT
+        elif piece_index == 3:
+            self.promotion_piece = chess.BISHOP
+
+        if self.promotion_piece != None and self.pending_move_to_square:
+            final_move = chess.Move(self.source_square, self.pending_move_to_square, promotion=self.promotion_piece)
+            
+            if final_move in self.board.legal_moves:
+                self.board.push(final_move)
+            
+            #self.reset_selection()
+            self.promotion_piece = None
+            self.pending_move_to_square = None
+            self.source_square = None # Reset for next move
+            self.legal_moves_for_source_square = []
+            self.is_promoting = False
+        print(piece_index)
+        
 
     def engine_make_move(self):
         # Only start the engine if its the engines turn and not already thinking
@@ -139,14 +216,30 @@ class BoardController:
     def run_engine(self):
         """ This runs in the background thread """
         try:
-            # The engine calculates here (GUI stays responsive)
-            result = self.engine.play(self.board, chess.engine.Limit(time=1.0)) # Reduced time for testing
+            self.is_engine_thinking = True
+            
+            # 1. Start an analysis task instead of a simple "play"
+            with self.engine.analysis(self.board, chess.engine.Limit(time=1.0)) as analysis:
+                self.current_analysis = analysis
+                
+                # 2. Wait for the engine to finish or be stopped
+                for info in analysis:
+                    # print(info.get("depth")) 
+                    # print(info.get("score"))
+                    print(info.get("pv"))
+                    pass
 
-            if result.move is not None:
-                # Important: We push the move back to the board
-                self.board.push(result.move)
+                # 3. Get the final move
+                result = analysis.wait()
+                if result.move:
+                    self.board.push(result.move)
+
+        except chess.engine.AnalysisComplete:
+            pass # Analysis finished naturally
+        except Exception as e:
+            print(f"Engine interrupted or error: {e}")
         finally:
-            # Reset the flag so the engine can move again next turn
+            self.current_analysis = None
             self.is_engine_thinking = False
 
     def change_turn(self):
