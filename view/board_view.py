@@ -2,11 +2,11 @@ from config import *
 import pygame as pg
 from controller import BoardController
 import os
+import chess
 
 class BoardView:
     def __init__(self):
-        self.x = (SCREEN_WIDTH - BOARD_WIDTH) // 2 
-        self.y = (SCREEN_HEIGHT - BOARD_HEIGHT) // 2
+
         self.controller = BoardController()
         self.pieces_images = {
             'P': None, 'N': None, 'B': None, 'R': None, 'Q': None, 'K': None,
@@ -38,9 +38,11 @@ class BoardView:
     def draw(self, win):
         # Placeholder for drawing the chess board
         self.draw_board(win)
+        self.draw_legal_moves_for_source_square(win)
         self.draw_pieces(win)
         self.show_files_ranks(win)
-        pg.draw.rect(win, GRAY, (self.x, self.y, BOARD_WIDTH, BOARD_HEIGHT), 3)
+        self.draw_circle_indicating_turn(win)
+        pg.draw.rect(win, GRAY, (BOARD_X, BOARD_Y, BOARD_WIDTH, BOARD_HEIGHT), 3)
 
     def draw_board(self, win):
         for rank in range(8):
@@ -60,7 +62,7 @@ class BoardView:
                 else:
                     color = BLACK_SQUARE_COLOR
 
-                pg.draw.rect(win, color,(self.x + col * SQUARE_SIZE, self.y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
+                pg.draw.rect(win, color,(BOARD_X + col * SQUARE_SIZE, BOARD_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
     def draw_pieces(self, win):
         for square, piece in self.controller.board.piece_map().items():
@@ -79,10 +81,28 @@ class BoardView:
                 row = rank
                 col = 7 - file
 
-            x_pos = self.x + col * SQUARE_SIZE + (SQUARE_SIZE - PIECE_SIZE) // 2
-            y_pos = self.y + row * SQUARE_SIZE + (SQUARE_SIZE - PIECE_SIZE) // 2
+            x_pos = BOARD_X + col * SQUARE_SIZE + (SQUARE_SIZE - PIECE_SIZE) // 2
+            y_pos = BOARD_Y + row * SQUARE_SIZE + (SQUARE_SIZE - PIECE_SIZE) // 2
 
             win.blit(piece_image, (x_pos, y_pos))
+
+    def draw_legal_moves_for_source_square(self, win):
+        for move in self.controller.legal_moves_for_source_square:
+            to_square = move.to_square
+            rank = to_square // 8
+            file = to_square % 8
+
+            if self.controller.white_on_bottom:
+                row = 7 - rank
+                col = file
+            else:
+                row = rank
+                col = 7 - file
+
+            center_x = BOARD_X + col * SQUARE_SIZE + SQUARE_SIZE // 2
+            center_y = BOARD_Y + row * SQUARE_SIZE + SQUARE_SIZE // 2
+
+            pg.draw.circle(win, HIGHLIGHT_COLOR, (center_x, center_y), SQUARE_SIZE * 0.3)
 
     def show_files_ranks(self, win):
         for i in range(8):
@@ -92,20 +112,28 @@ class BoardView:
             # Files (a-h)
             file_text = self.font.render(file_char, True, FONT_COLOR)
             if self.controller.white_on_bottom:
-                file_x = self.x + i * SQUARE_SIZE + SQUARE_SIZE // 2 - file_text.get_width() // 2
-                file_y = self.y + BOARD_HEIGHT
+                file_x = BOARD_X + i * SQUARE_SIZE + SQUARE_SIZE // 2 - file_text.get_width() // 2
+                file_y = BOARD_Y + BOARD_HEIGHT
             else:
-                file_x = self.x + (7 - i) * SQUARE_SIZE + SQUARE_SIZE // 2 - file_text.get_width() // 2
-                file_y = self.y + BOARD_HEIGHT
+                file_x = BOARD_X + (7 - i) * SQUARE_SIZE + SQUARE_SIZE // 2 - file_text.get_width() // 2
+                file_y = BOARD_Y + BOARD_HEIGHT
             win.blit(file_text, (file_x, file_y))
 
             # Ranks (1-8)
             rank_text = self.font.render(rank_char, True, FONT_COLOR)
             if self.controller.white_on_bottom:
-                rank_x = self.x - rank_text.get_width()
-                rank_y = self.y + i * SQUARE_SIZE + SQUARE_SIZE // 2 - rank_text.get_height() // 2
+                rank_x = BOARD_X - rank_text.get_width()
+                rank_y = BOARD_Y + i * SQUARE_SIZE + SQUARE_SIZE // 2 - rank_text.get_height() // 2
             else:
-                rank_x = self.x - rank_text.get_width()
-                rank_y = self.y + (7 - i) * SQUARE_SIZE + SQUARE_SIZE // 2 - rank_text.get_height() // 2
+                rank_x = BOARD_X - rank_text.get_width()
+                rank_y = BOARD_Y + (7 - i) * SQUARE_SIZE + SQUARE_SIZE // 2 - rank_text.get_height() // 2
             win.blit(rank_text, (rank_x, rank_y))
-        
+
+    def draw_circle_indicating_turn(self, win):
+        if self.controller.board.turn == chess.WHITE:
+            color = WHITE
+        else:
+            color = BLACK
+
+        pg.draw.circle(win, color, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS)
+        pg.draw.circle(win, BLACK, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS, 2)

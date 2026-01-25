@@ -1,7 +1,6 @@
-from config import SCREEN_HEIGHT, SCREEN_WIDTH, WHITE
+from config import *
 import pygame as pg
 from .board_view import BoardView
-from view import board_view
 
 class MainWindow:
     def __init__(self):
@@ -17,12 +16,18 @@ class MainWindow:
         pg.display.update()  # Update the display
 
     def run(self):
-    
+        clock = pg.time.Clock()
         running = True
         while running:
+            mouse_pos = pg.mouse.get_pos()
+
+            clock.tick(FPS) 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     running = False
+                #self.board_view.controller.choose_source_square(event, mouse_pos)
+                #self.board_view.controller.choose_target_square(event, mouse_pos)
+                self.board_view.controller.handle_click(event, mouse_pos)
             self.draw()
         pg.quit()
         self.board_view.controller.shut_down_engine()
