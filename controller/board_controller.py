@@ -12,6 +12,7 @@ class BoardController:
         # fen = check_fen  # For testing purposes
         #fen =pawn_promotion_fen
         #fen = pawn_promotion_fen_black_turn
+        #fen = promotion_fen
         self.board = chess.Board(fen)
         self.engine = None
         self.load_engine()
@@ -33,6 +34,8 @@ class BoardController:
             'P': 0, 'N': 0, 'B': 0, 'R': 0, 'Q': 0, 'K': 0,
             'p': 0, 'n': 0, 'b': 0, 'r': 0, 'q': 0, 'k': 0
         }
+
+        self.get_absent_pieces()
 
     def load_engine(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
