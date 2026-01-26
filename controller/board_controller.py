@@ -9,8 +9,9 @@ from view.promotion_table_view import PromotionTableView
 class BoardController:
     def __init__(self):
         fen = chess.STARTING_FEN
-        #fen = check_fen  # For testing purposes
+        # fen = check_fen  # For testing purposes
         #fen =pawn_promotion_fen
+        #fen = pawn_promotion_fen_black_turn
         self.board = chess.Board(fen)
         self.engine = None
         self.load_engine()
@@ -25,6 +26,13 @@ class BoardController:
         self.promotion_piece = None
         self.promotion_table = PromotionTableView()
 
+        self.source_square_display = None
+        self.target_square_display = None
+
+        self.absent_pices_num = {
+            'P': 0, 'N': 0, 'B': 0, 'R': 0, 'Q': 0, 'K': 0,
+            'p': 0, 'n': 0, 'b': 0, 'r': 0, 'q': 0, 'k': 0
+        }
 
     def load_engine(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -95,7 +103,6 @@ class BoardController:
 
     def handle_click(self, event, mouse_pos):
         # UNCOMMENT THESE LINES TO ENABLE ENGINE PLAY
-        # MAME SAM TI EBAL NE OTKOMENTIRASH LI GI
         # --------------------------------------------
         if self.white_on_bottom and self.board.turn == chess.BLACK:
             return
@@ -141,7 +148,11 @@ class BoardController:
                     self.pending_move_to_square = square # Remember the target
                     return # STOP HERE. Don't push to board yet.
 
+                self.source_square_display = move_to_make.from_square
+                self.target_square_display = move_to_make.to_square
+
                 self.board.push(move_to_make)
+                self.get_absent_pieces()
 
                 self.source_square = None # Reset for next move
                 self.legal_moves_for_source_square = []
@@ -190,13 +201,15 @@ class BoardController:
             if final_move in self.board.legal_moves:
                 self.board.push(final_move)
             
-            #self.reset_selection()
+            self.source_square_display = final_move.from_square
+            self.target_square_display = final_move.to_square
+            
             self.promotion_piece = None
             self.pending_move_to_square = None
             self.source_square = None # Reset for next move
             self.legal_moves_for_source_square = []
             self.is_promoting = False
-        print(piece_index)
+        
         
 
     def engine_make_move(self):
@@ -217,22 +230,33 @@ class BoardController:
         """ This runs in the background thread """
         try:
             self.is_engine_thinking = True
-            
+            # result = self.engine.play(self.board, chess.engine.Limit(
+            #     white_clock=60.0, 
+            #     black_clock=60.0
+            # ))
+            # if result.move:
+            #     self.board.push(result.move)
+
             # 1. Start an analysis task instead of a simple "play"
-            with self.engine.analysis(self.board, chess.engine.Limit(time=1.0)) as analysis:
+            with self.engine.analysis(self.board, 
+                                      chess.engine.Limit(white_clock=60.0, black_clock=60.0)) as analysis:
                 self.current_analysis = analysis
                 
                 # 2. Wait for the engine to finish or be stopped
                 for info in analysis:
                     # print(info.get("depth")) 
                     # print(info.get("score"))
-                    print(info.get("pv"))
+                    # print(info.get("pv"))
+                    # print(info.items)
                     pass
 
                 # 3. Get the final move
                 result = analysis.wait()
                 if result.move:
+                    self.source_square_display = result.move.from_square
+                    self.target_square_display = result.move.to_square
                     self.board.push(result.move)
+                    self.get_absent_pieces()
 
         except chess.engine.AnalysisComplete:
             pass # Analysis finished naturally
@@ -241,6 +265,26 @@ class BoardController:
         finally:
             self.current_analysis = None
             self.is_engine_thinking = False
+
+    def get_absent_pieces(self):
+        self.absent_pices_num = {
+            'P': 0, 'N': 0, 'B': 0, 'R': 0, 'Q': 0, 'K': 0,
+            'p': 0, 'n': 0, 'b': 0, 'r': 0, 'q': 0, 'k': 0
+        }
+        active_piece_symbols = [p.symbol() for p in self.board.piece_map().values()]
+
+        for p in active_piece_symbols:
+            if p not in ('k', 'K'):
+                self.absent_pices_num[p] += 1
+        
+        for p in self.absent_pices_num.keys():
+            if p in ('p', 'P'):
+                self.absent_pices_num[p] = 8 - self.absent_pices_num[p]
+            elif p in ('N', 'n', 'B', 'b', 'R', 'r'):
+                self.absent_pices_num[p] = 2 - self.absent_pices_num[p]
+            elif p in ('Q', 'q'):
+                self.absent_pices_num[p] = 1 - self.absent_pices_num[p]
+
 
     def change_turn(self):
         self.board.turn = not self.board.turn

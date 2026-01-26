@@ -4,6 +4,7 @@ from controller import BoardController
 import os
 import chess
 from .promotion_table_view import PromotionTableView
+from .material_score_table_view import MaterialScoreTableView
 
 class BoardView:
     def __init__(self):
@@ -17,6 +18,7 @@ class BoardView:
         pg.font.init()
         self.font = pg.font.SysFont('Consolas', int(SQUARE_SIZE * 0.3), bold=True)
         self.promotion_table = PromotionTableView()
+        self.material_table = MaterialScoreTableView()
 
     def load_pictures(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -40,10 +42,14 @@ class BoardView:
         # Placeholder for drawing the chess board
         self.draw_board(win)
         self.draw_legal_moves_for_source_square(win)
-        self.draw_pieces(win)
         self.show_files_ranks(win)
+        self.material_table.draw(win, self.controller.absent_pices_num)
         self.draw_circle_indicating_turn(win)
         self.draw_square_in_check(win)
+        self.draw_made_move(win)
+        self.draw_pieces(win) # need to be the last
+        
+        # self.controller.get_absent_pieces()
 
         pg.draw.rect(win, GRAY, (BOARD_X, BOARD_Y, BOARD_WIDTH, BOARD_HEIGHT), 2)
 
@@ -163,4 +169,25 @@ class BoardView:
 
                     # Using a thicker line or a semi-transparent surface looks better
                     rect = (BOARD_X + col * SQUARE_SIZE, BOARD_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
-                    pg.draw.rect(win, HIGHLIGHT_COLOR, rect, 5) # Explicit Red for Check
+                    pg.draw.rect(win, HIGHLIGHT_COLOR, rect) # Explicit Red for Check
+
+    def draw_made_move(self, win):
+        if self.controller.source_square_display and self.controller.target_square_display:
+            source_rank = self.controller.source_square_display // 8
+            source_file = self.controller.source_square_display % 8
+
+            target_rank = self.controller.target_square_display // 8
+            target_file = self.controller.target_square_display % 8
+
+            if self.controller.white_on_bottom:
+                row_source, col_source = 7 - source_rank, source_file
+                row_target, col_target = 7 - target_rank, target_file
+            else:
+                row_source, col_source = source_rank, 7 - source_file
+                row_target, col_target = target_rank, 7 - target_file
+            
+            source_rect = (BOARD_X + col_source * SQUARE_SIZE, BOARD_Y + row_source * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+            target_rect = (BOARD_X + col_target * SQUARE_SIZE, BOARD_Y + row_target * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+            pg.draw.rect(win, HIGHLIGHT_COLOR, source_rect, 5)
+            pg.draw.rect(win, HIGHLIGHT_COLOR, target_rect, 5)
+
