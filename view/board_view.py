@@ -5,6 +5,7 @@ import os
 import chess
 from .promotion_table_view import PromotionTableView
 from .material_score_table_view import MaterialScoreTableView
+from .time_view import TimeView
 
 class BoardView:
     def __init__(self):
@@ -19,6 +20,7 @@ class BoardView:
         self.font = pg.font.SysFont('Consolas', int(SQUARE_SIZE * 0.3), bold=True)
         self.promotion_table = PromotionTableView()
         self.material_table = MaterialScoreTableView()
+        self.time_table = TimeView()
 
     def load_pictures(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -47,6 +49,8 @@ class BoardView:
         self.draw_circle_indicating_turn(win)
         self.draw_square_in_check(win)
         self.draw_made_move(win)
+        self.time_table.draw(win, self.controller.white_clock, self.controller.black_clock)
+
         self.draw_pieces(win) # need to be the last
         
         # self.controller.get_absent_pieces()
@@ -59,7 +63,7 @@ class BoardView:
         for rank in range(8):
             for file in range(8):
                 
-                # Map logical square → screen square
+                # Map logical square -> screen square
                 if self.controller.white_on_bottom:
                     row = 7 - rank
                     col = file
@@ -191,3 +195,5 @@ class BoardView:
             pg.draw.rect(win, HIGHLIGHT_COLOR, source_rect, 5)
             pg.draw.rect(win, HIGHLIGHT_COLOR, target_rect, 5)
 
+    def draw_time_info(self):
+        pass

@@ -3,6 +3,8 @@ import chess.engine as engine
 import os
 import pygame as pg
 import threading
+import time
+import sys
 from config import *
 from view.promotion_table_view import PromotionTableView
 
@@ -30,12 +32,19 @@ class BoardController:
         self.source_square_display = None
         self.target_square_display = None
 
+        self.white_clock = 60.0
+        self.black_clock = 60.0
+        self.last_time = time.time()
+        self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock)
+
         self.absent_pices_num = {
             'P': 0, 'N': 0, 'B': 0, 'R': 0, 'Q': 0, 'K': 0,
             'p': 0, 'n': 0, 'b': 0, 'r': 0, 'q': 0, 'k': 0
         }
 
         self.get_absent_pieces()
+
+        self.is_force_quit_engine = False
 
     def load_engine(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -234,42 +243,52 @@ class BoardController:
     def run_engine(self):
         """ This runs in the background thread """
         try:
+            if not self.engine or self.is_force_quit_engine:
+                return
+
             self.is_engine_thinking = True
-            # result = self.engine.play(self.board, chess.engine.Limit(
-            #     white_clock=60.0, 
-            #     black_clock=60.0
-            # ))
-            # if result.move:
-            #     self.board.push(result.move)
-
-            # 1. Start an analysis task instead of a simple "play"
-            with self.engine.analysis(self.board, 
-                                      chess.engine.Limit(white_clock=60.0, black_clock=60.0)) as analysis:
+            with self.engine.analysis(self.board, self.time_limit) as analysis:
                 self.current_analysis = analysis
-                
-                # 2. Wait for the engine to finish or be stopped
-                for info in analysis:
-                    # print(info.get("depth")) 
-                    # print(info.get("score"))
-                    # print(info.get("pv"))
-                    # print(info.items)
-                    pass
 
-                # 3. Get the final move
+                for info in analysis:
+                    if self.is_force_quit_engine:
+                        analysis.stop()
+                        break
+                    
+                if self.is_force_quit_engine:
+                    return
+
                 result = analysis.wait()
-                if result.move:
+                if result.move and not self.is_force_quit_engine:
                     self.source_square_display = result.move.from_square
                     self.target_square_display = result.move.to_square
                     self.board.push(result.move)
                     self.get_absent_pieces()
 
-        except chess.engine.AnalysisComplete:
-            pass # Analysis finished naturally
+        except (chess.engine.EngineTerminatedError, chess.engine.AnalysisComplete):
+            print("Engine stopped or analysis complete.")
         except Exception as e:
-            print(f"Engine interrupted or error: {e}")
+            print(f"Engine thread error: {e}")
         finally:
             self.current_analysis = None
             self.is_engine_thinking = False
+
+
+    def update_time(self):
+        # 1. Calculate how much time passed since the last update
+        current_time = time.time()
+        delta_time = current_time - self.last_time
+        self.last_time = current_time
+
+        # 2. Subtract from the active player
+        if self.board.turn == chess.WHITE:
+            self.white_clock -= delta_time
+        else:
+            self.black_clock -= delta_time
+
+        # 3. Ensure clocks don't go below zero
+        self.white_clock = max(0, self.white_clock)
+        self.black_clock = max(0, self.black_clock)
 
     def get_absent_pieces(self):
         self.absent_pices_num = {
@@ -291,11 +310,29 @@ class BoardController:
                 self.absent_pices_num[p] = 1 - self.absent_pices_num[p]
 
 
-    def change_turn(self):
-        self.board.turn = not self.board.turn
-
     def shut_down_engine(self):
+        self.is_force_quit_engine = True
+
+        # 1. Stop the current analysis first
+        if self.current_analysis:
+            try:
+                self.current_analysis.stop()
+            except:
+                print("Error stoping analysis")
+
+        # 2. Wait for the background thread to finish its loop (max 15 seconds)
+        start_wait = time.time()
+        while self.is_engine_thinking and (time.time() - start_wait < 15.0):
+            time.sleep(1)
+
+        # 3. Now safely quit the engine process
         if self.engine:
-            self.engine.quit()
+            try:
+                self.engine.quit()
+            except Exception as e:
+                print(f"Hard closing engine: {e}")
+                self.engine.close()
+            finally:
+                self.engine = None
 
     
