@@ -83,6 +83,7 @@ class BoardController:
                         self.board.push(m)
                         self.source_square = None
                         self.get_legal_moves_for_source_square()
+                        self.get_absent_pieces()
                         return
 
     def get_legal_moves_for_source_square(self):
@@ -200,6 +201,7 @@ class BoardController:
             
             if final_move in self.board.legal_moves:
                 self.board.push(final_move)
+                self.get_absent_pieces()
             
             self.source_square_display = final_move.from_square
             self.target_square_display = final_move.to_square
