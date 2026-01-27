@@ -10,13 +10,18 @@ class TimeView:
         minutes = time // 60
         seconds = time % 60
 
+        minutes = f"{minutes:02d}"
+        seconds = f"{seconds:02d}"
+
         return f"{minutes}:{seconds}"
 
     def draw(self, win, white_clock, black_clock):
         white_time = self.font.render(self.format_time(white_clock), True, BLACK)
         black_time = self.font.render(self.format_time(black_clock), True, BLACK)
 
-        pg.draw.rect(win, BLACK, (TIME_INFO_X, TIME_INFO_Y, TIME_INFO_WIDTH, TIME_INFO_HEIGHT), 5)
+        pg.draw.rect(win, WHITE_SQUARE_COLOR, (TIME_INFO_X, TIME_INFO_Y, TIME_INFO_CELL_WIDTH, TIME_INFO_HEIGHT))
+        pg.draw.rect(win, BLACK_SQUARE_COLOR, (TIME_INFO_X + TIME_INFO_CELL_WIDTH, TIME_INFO_Y, TIME_INFO_CELL_WIDTH, TIME_INFO_HEIGHT))
+
         win.blit(white_time, (TIME_INFO_X + TIME_INFO_CELL_WIDTH // 2 - white_time.get_width() // 2,
                                TIME_INFO_Y + TIME_INFO_HEIGHT // 2 - white_time.get_height() // 2))
         
@@ -24,3 +29,4 @@ class TimeView:
                                TIME_INFO_Y + TIME_INFO_HEIGHT // 2 - white_time.get_height() // 2))
 
         pg.draw.line(win, BLACK, (TIME_INFO_X + TIME_INFO_CELL_WIDTH, TIME_INFO_Y), (TIME_INFO_X + TIME_INFO_CELL_WIDTH, TIME_INFO_Y + TIME_INFO_HEIGHT - 1), 3)
+        pg.draw.rect(win, BLACK, (TIME_INFO_X, TIME_INFO_Y, TIME_INFO_WIDTH, TIME_INFO_HEIGHT), 5)

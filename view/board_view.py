@@ -6,6 +6,7 @@ import chess
 from .promotion_table_view import PromotionTableView
 from .material_score_table_view import MaterialScoreTableView
 from .time_view import TimeView
+from .button import Button
 
 class BoardView:
     def __init__(self):
@@ -21,6 +22,7 @@ class BoardView:
         self.promotion_table = PromotionTableView()
         self.material_table = MaterialScoreTableView()
         self.time_table = TimeView()
+        self.play_button = Button(PLAY_BUTTON_X, PLAY_BUTTON_Y, PLAY_BUTTON_WIDTH, PLAY_BUTTON_HEIGHT, self.controller.play_button_action, "Start new game")
 
     def load_pictures(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -42,6 +44,7 @@ class BoardView:
 
     def draw(self, win):
         # Placeholder for drawing the chess board
+        self.draw_board_background(win)
         self.draw_board(win)
         self.draw_legal_moves_for_source_square(win)
         self.show_files_ranks(win)
@@ -49,7 +52,9 @@ class BoardView:
         self.draw_circle_indicating_turn(win)
         self.draw_square_in_check(win)
         self.draw_made_move(win)
+
         self.time_table.draw(win, self.controller.white_clock, self.controller.black_clock)
+        self.play_button.draw(win)
 
         self.draw_pieces(win) # need to be the last
         
@@ -127,8 +132,8 @@ class BoardView:
             # Files (a-h)
             file_text = self.font.render(file_char, True, FONT_COLOR)
             if self.controller.white_on_bottom:
-                file_x = BOARD_X + i * SQUARE_SIZE + SQUARE_SIZE // 2 - file_text.get_width() // 2
-                file_y = BOARD_Y + BOARD_HEIGHT
+                file_x = BOARD_X + i * SQUARE_SIZE + SQUARE_SIZE // 2 - file_text.get_width() // 2 
+                file_y = BOARD_Y + BOARD_HEIGHT 
             else:
                 file_x = BOARD_X + (7 - i) * SQUARE_SIZE + SQUARE_SIZE // 2 - file_text.get_width() // 2
                 file_y = BOARD_Y + BOARD_HEIGHT
@@ -137,7 +142,7 @@ class BoardView:
             # Ranks (1-8)
             rank_text = self.font.render(rank_char, True, FONT_COLOR)
             if self.controller.white_on_bottom:
-                rank_x = BOARD_X - rank_text.get_width()
+                rank_x = BOARD_X - rank_text.get_width() - 5
                 rank_y = BOARD_Y + i * SQUARE_SIZE + SQUARE_SIZE // 2 - rank_text.get_height() // 2
             else:
                 rank_x = BOARD_X - rank_text.get_width()
@@ -195,5 +200,15 @@ class BoardView:
             pg.draw.rect(win, HIGHLIGHT_COLOR, source_rect, 5)
             pg.draw.rect(win, HIGHLIGHT_COLOR, target_rect, 5)
 
-    def draw_time_info(self):
-        pass
+    def draw_board_background(self, win):
+        rank_char = self.font.render('a', True, FONT_COLOR) # char to get height, the all got the same height
+        file_char = self.font.render('a', True, FONT_COLOR) # char to get width, the all got the same width
+        margin = 5
+
+        gap_margin = max(rank_char.get_width(), file_char.get_height())
+        x = BOARD_X - gap_margin - margin
+        y = BOARD_Y - gap_margin - margin
+        width = BOARD_WIDTH + 2 * (gap_margin + margin)
+        height = BOARD_HEIGHT + 2 * (gap_margin + margin)
+        pg.draw.rect(win, WHITE, (x, y, width, height))
+        #pg.draw.rect(win, BLACK, (x, y, width, height), 1)

@@ -1,6 +1,7 @@
 from config import *
 import pygame as pg
 import time
+import chess
 from .board_view import BoardView
 
 class MainWindow:
@@ -22,19 +23,25 @@ class MainWindow:
 
         while running:
             mouse_pos = pg.mouse.get_pos()
-            self.board_view.controller.update_time()
+            mouse_state = pg.mouse.get_pressed()
             clock.tick(FPS) 
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     running = False
                     self.board_view.controller.is_force_quit_engine = True
-                    #self.board_view.controller.shut_down_engine()
 
+                
+                self.board_view.play_button.update_color_when_pressed(event, mouse_pos)
+                self.board_view.play_button.execute_command(event, mouse_pos)
                 self.board_view.controller.handle_click(event, mouse_pos)
                 self.board_view.controller.choose_promotion_piece(event, mouse_pos)
+            
             self.draw()
+            self.board_view.controller.update_time()
             self.board_view.controller.engine_make_move()
+            self.board_view.controller.update_game_status()
+            self.board_view.controller.reset_game()
 
         pg.quit()
         self.board_view.controller.shut_down_engine()

@@ -12,30 +12,35 @@ class BoardController:
     def __init__(self):
         fen = chess.STARTING_FEN
         # fen = check_fen  # For testing purposes
-        #fen =pawn_promotion_fen
-        #fen = pawn_promotion_fen_black_turn
-        #fen = promotion_fen
+        # fen = pawn_promotion_fen
+        # fen = pawn_promotion_fen_black_turn
+        # fen = promotion_fen
         self.board = chess.Board(fen)
         self.engine = None
         self.load_engine()
+
         self.white_on_bottom = True # Default orientation
+
         self.source_square = None
         self.legal_moves_for_source_square = []
+
         self.is_engine_thinking = False
         self.current_analysis = None
+        self.is_force_quit_engine = False
 
         self.pending_move_to_square = None
         self.is_promoting = False
         self.promotion_piece = None
-        self.promotion_table = PromotionTableView()
 
         self.source_square_display = None
         self.target_square_display = None
 
-        self.white_clock = 60.0
-        self.black_clock = 60.0
+        self.white_clock = STARTING_TIME
+        self.black_clock = STARTING_TIME
         self.last_time = time.time()
         self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock)
+
+        self.game_status = GAME_PAUSED
 
         self.absent_pices_num = {
             'P': 0, 'N': 0, 'B': 0, 'R': 0, 'Q': 0, 'K': 0,
@@ -44,7 +49,6 @@ class BoardController:
 
         self.get_absent_pieces()
 
-        self.is_force_quit_engine = False
 
     def load_engine(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -117,6 +121,8 @@ class BoardController:
     def handle_click(self, event, mouse_pos):
         # UNCOMMENT THESE LINES TO ENABLE ENGINE PLAY
         # --------------------------------------------
+        if self.game_status != PLAYING:
+            return
         if self.white_on_bottom and self.board.turn == chess.BLACK:
             return
         if self.white_on_bottom == False and self.board.turn == chess.WHITE:
@@ -230,7 +236,7 @@ class BoardController:
         # Only start the engine if its the engines turn and not already thinking
         if (self.white_on_bottom and self.board.turn == chess.BLACK or 
             not self.white_on_bottom and self.board.turn == chess.WHITE) \
-            and not self.is_engine_thinking:
+            and not self.is_engine_thinking and self.game_status == PLAYING:
             if self.engine is None:
                 return
 
@@ -275,6 +281,12 @@ class BoardController:
 
 
     def update_time(self):
+        if self.game_status != PLAYING:
+        # Crucial: Keep last_time updated so when we DO start, 
+        # there isn't a huge "jump" in time.
+            self.last_time = time.time()
+            return
+        
         # 1. Calculate how much time passed since the last update
         current_time = time.time()
         delta_time = current_time - self.last_time
@@ -289,6 +301,51 @@ class BoardController:
         # 3. Ensure clocks don't go below zero
         self.white_clock = max(0, self.white_clock)
         self.black_clock = max(0, self.black_clock)
+
+    def update_game_status(self):
+        if self.board.is_checkmate():
+            self.game_status = CHECKMATE
+        elif self.board.is_stalemate():
+            self.game_status = STALEMATE
+        elif self.board.is_insufficient_material():
+            self.game_status = INSUFFICIENT_MATERIAL
+        elif self.white_clock == 0:
+            self.game_status = TIME_PASSED
+        elif self.black_clock == 0:
+            self.game_status = TIME_PASSED
+
+    def reset_game(self):
+        if self.game_status not in (PLAYING, GAME_PAUSED) and self.current_analysis == None:
+            self.source_square = None
+            self.legal_moves_for_source_square = []
+
+            self.is_engine_thinking = False
+            self.current_analysis = None
+            self.is_force_quit_engine = False
+
+            self.pending_move_to_square = None
+            self.is_promoting = False
+            self.promotion_piece = None
+
+            self.source_square_display = None
+            self.target_square_display = None
+
+            
+
+            self.game_status = GAME_PAUSED
+            self.get_absent_pieces()
+
+            self.board.turn = chess.WHITE
+
+    def play_button_action(self):
+        self.reset_game()
+        self.board.set_fen(chess.STARTING_FEN)
+
+        self.white_clock = STARTING_TIME
+        self.black_clock = STARTING_TIME
+        self.last_time = time.time()
+
+        self.game_status = PLAYING
 
     def get_absent_pieces(self):
         self.absent_pices_num = {
@@ -323,7 +380,7 @@ class BoardController:
         # 2. Wait for the background thread to finish its loop (max 15 seconds)
         start_wait = time.time()
         while self.is_engine_thinking and (time.time() - start_wait < 15.0):
-            time.sleep(1)
+            time.sleep(0.1)
 
         # 3. Now safely quit the engine process
         if self.engine:
