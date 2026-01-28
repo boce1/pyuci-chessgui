@@ -36,7 +36,7 @@ class MaterialScoreTableView:
             'q' : (MATERIAL_SCORE_X, MATERIAL_BLACK_QUEEN_Y)
         }
 
-        self.font = pg.font.SysFont("Consolas", int(MATERIAL_SCORE_WIDTH * 0.6), bold=False)
+        self.font = pg.font.SysFont("Consolas", int(MATERIAL_SCORE_WIDTH * 0.6), bold=True)
         self.message_1_x = self.font.render("", True, BLACK)
         self.message_2_x = self.font.render("2x", True, BLACK)
         self.message_3_x = self.font.render("3x", True, BLACK)

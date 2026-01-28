@@ -35,10 +35,11 @@ class BoardController:
         self.source_square_display = None
         self.target_square_display = None
 
-        self.white_clock = STARTING_TIME
-        self.black_clock = STARTING_TIME
+        self.white_clock = TIME_5_MINUTES
+        self.black_clock = TIME_5_MINUTES
         self.last_time = time.time()
         self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock)
+        self.last_selected_time = (self.white_clock, self.black_clock)
 
         self.game_status = GAME_PAUSED
 
@@ -249,7 +250,7 @@ class BoardController:
     def run_engine(self):
         """ This runs in the background thread """
         try:
-            if not self.engine or self.is_force_quit_engine:
+            if not self.engine or self.is_force_quit_engine or self.game_status == GAME_PAUSED:
                 return
 
             self.is_engine_thinking = True
@@ -257,11 +258,15 @@ class BoardController:
                 self.current_analysis = analysis
 
                 for info in analysis:
-                    if self.is_force_quit_engine:
+                    if self.is_force_quit_engine or self.game_status == GAME_PAUSED:
+                        self.source_square_display = None
+                        self.target_square_display = None
                         analysis.stop()
                         break
                     
-                if self.is_force_quit_engine:
+                if self.is_force_quit_engine or self.game_status == GAME_PAUSED:
+                    self.source_square_display = None
+                    self.target_square_display = None
                     return
 
                 result = analysis.wait()
@@ -314,8 +319,11 @@ class BoardController:
         elif self.black_clock == 0:
             self.game_status = TIME_PASSED
 
-    def reset_game(self):
-        if self.game_status not in (PLAYING, GAME_PAUSED) and self.current_analysis == None:
+    def stop_game(self):
+        if self.game_status == PLAYING:
+            self.game_status = GAME_PAUSED
+            self.source_square_display = None
+            self.target_square_display = None
             self.source_square = None
             self.legal_moves_for_source_square = []
 
@@ -329,7 +337,30 @@ class BoardController:
 
             self.source_square_display = None
             self.target_square_display = None
+            
 
+            self.game_status = GAME_PAUSED
+            self.get_absent_pieces()
+
+            self.board.turn = chess.WHITE
+
+    def reset_game(self):
+        if not self.is_engine_thinking and self.game_status != PLAYING and self.current_analysis == None:
+            self.source_square_display = None
+            self.target_square_display = None
+            self.source_square = None
+            self.legal_moves_for_source_square = []
+
+            self.is_engine_thinking = False
+            self.current_analysis = None
+            self.is_force_quit_engine = False
+
+            self.pending_move_to_square = None
+            self.is_promoting = False
+            self.promotion_piece = None
+
+            self.source_square_display = None
+            self.target_square_display = None
             
 
             self.game_status = GAME_PAUSED
@@ -338,14 +369,41 @@ class BoardController:
             self.board.turn = chess.WHITE
 
     def play_button_action(self):
-        self.reset_game()
-        self.board.set_fen(chess.STARTING_FEN)
+        if self.game_status != PLAYING:
+            self.board.set_fen(chess.STARTING_FEN)
+            self.reset_game()
+    
+            # self.white_clock = TIME_1_MUNUTES
+            # self.black_clock = TIME_1_MUNUTES
+            self.white_clock, self.black_clock = self.last_selected_time
+            self.last_time = time.time()
+    
+            self.game_status = PLAYING
 
-        self.white_clock = STARTING_TIME
-        self.black_clock = STARTING_TIME
-        self.last_time = time.time()
+    def set_TIME_1_MUNUTES(self):
+        if self.game_status != PLAYING:
+            self.black_clock = TIME_1_MUNUTES
+            self.white_clock = TIME_1_MUNUTES
+            self.last_selected_time = (self.white_clock, self.black_clock)
+            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock)
 
-        self.game_status = PLAYING
+    def set_time_5_minutes(self):
+        if self.game_status != PLAYING:
+            self.black_clock = TIME_5_MINUTES
+            self.white_clock = TIME_5_MINUTES
+            self.last_selected_time = (self.white_clock, self.black_clock)
+            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock)
+        
+    def set_time_10_minutes(self):
+        if self.game_status != PLAYING:
+            self.black_clock = TIME_10_MINUTES
+            self.white_clock = TIME_10_MINUTES
+            self.last_selected_time = (self.white_clock, self.black_clock)
+            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock)
+
+    def change_board_orientation(self):
+        if self.game_status != PLAYING:
+            self.white_on_bottom = not self.white_on_bottom
 
     def get_absent_pieces(self):
         self.absent_pices_num = {

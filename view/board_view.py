@@ -23,6 +23,11 @@ class BoardView:
         self.material_table = MaterialScoreTableView()
         self.time_table = TimeView()
         self.play_button = Button(PLAY_BUTTON_X, PLAY_BUTTON_Y, PLAY_BUTTON_WIDTH, PLAY_BUTTON_HEIGHT, self.controller.play_button_action, "Start new game")
+        self.pause_button = Button(PAUSE_BUTTON_X, PAUSE_BUTTON_Y, PAUSE_BUTTON_WIDTH, PAUSE_BUTTON_HEIGHT, self.controller.stop_game, "Stop the game")
+        self.one_minutes_button = Button(TIME_BUTTON_1_X, TIME_BUTTON_1_Y, TIME_BUTTON_1_WIDTH, TIME_BUTTON_1_HEIGHT, self.controller.set_TIME_1_MUNUTES, "1 munute")
+        self.five_minutes_button = Button(TIME_BUTTON_2_X, TIME_BUTTON_2_Y, TIME_BUTTON_2_WIDTH, TIME_BUTTON_2_HEIGHT, self.controller.set_time_5_minutes, "5 munutes")
+        self.ten_minutes_button = Button(TIME_BUTTON_3_X, TIME_BUTTON_3_Y, TIME_BUTTON_3_WIDTH, TIME_BUTTON_3_HEIGHT, self.controller.set_time_10_minutes, "10 munutes")
+        self.change_side_button = Button(CHANGE_SIDE_BUTTON_X, CHANGE_SIDE_BUTTON_Y, CHANGE_SIDE_BUTTON_WIDTH, CHANGE_SIDE_BUTTON_HEIGHT, self.controller.change_board_orientation, "Change side")
 
     def load_pictures(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -46,15 +51,20 @@ class BoardView:
         # Placeholder for drawing the chess board
         self.draw_board_background(win)
         self.draw_board(win)
-        self.draw_legal_moves_for_source_square(win)
         self.show_files_ranks(win)
         self.material_table.draw(win, self.controller.absent_pices_num)
         self.draw_circle_indicating_turn(win)
         self.draw_square_in_check(win)
         self.draw_made_move(win)
+        self.draw_legal_moves_for_source_square(win)
 
         self.time_table.draw(win, self.controller.white_clock, self.controller.black_clock)
         self.play_button.draw(win)
+        self.pause_button.draw(win)
+        self.one_minutes_button.draw(win)
+        self.five_minutes_button.draw(win)
+        self.ten_minutes_button.draw(win)
+        self.change_side_button.draw(win)
 
         self.draw_pieces(win) # need to be the last
         
@@ -122,7 +132,7 @@ class BoardView:
             center_x = BOARD_X + col * SQUARE_SIZE + SQUARE_SIZE // 2
             center_y = BOARD_Y + row * SQUARE_SIZE + SQUARE_SIZE // 2
 
-            pg.draw.circle(win, HIGHLIGHT_COLOR, (center_x, center_y), SQUARE_SIZE * 0.3)
+            pg.draw.circle(win, HIGHLIGHT_COLOR, (center_x, center_y), SQUARE_SIZE // 2, SQUARE_SIZE // 15)
 
     def show_files_ranks(self, win):
         for i in range(8):
@@ -197,8 +207,8 @@ class BoardView:
             
             source_rect = (BOARD_X + col_source * SQUARE_SIZE, BOARD_Y + row_source * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
             target_rect = (BOARD_X + col_target * SQUARE_SIZE, BOARD_Y + row_target * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
-            pg.draw.rect(win, HIGHLIGHT_COLOR, source_rect, 5)
-            pg.draw.rect(win, HIGHLIGHT_COLOR, target_rect, 5)
+            pg.draw.rect(win, RED, source_rect, 5)
+            pg.draw.rect(win, RED, target_rect, 5)
 
     def draw_board_background(self, win):
         rank_char = self.font.render('a', True, FONT_COLOR) # char to get height, the all got the same height

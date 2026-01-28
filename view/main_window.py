@@ -9,6 +9,7 @@ class MainWindow:
         pg.init()
         self.width = SCREEN_WIDTH
         self.height = SCREEN_HEIGHT
+        pg.display.set_caption("Cincinnatus GUI")
         self.window = pg.display.set_mode((self.width, self.height))
         self.board_view = BoardView()
 
@@ -31,9 +32,24 @@ class MainWindow:
                     running = False
                     self.board_view.controller.is_force_quit_engine = True
 
-                
+                self.board_view.change_side_button.update_color_when_pressed(event, mouse_pos)
+                self.board_view.change_side_button.execute_command(event, mouse_pos)
+
+                self.board_view.one_minutes_button.update_color_when_pressed(event, mouse_pos)
+                self.board_view.one_minutes_button.execute_command(event, mouse_pos)
+
+                self.board_view.five_minutes_button.update_color_when_pressed(event, mouse_pos)
+                self.board_view.five_minutes_button.execute_command(event, mouse_pos)
+
+                self.board_view.ten_minutes_button.update_color_when_pressed(event, mouse_pos)
+                self.board_view.ten_minutes_button.execute_command(event, mouse_pos)
+
+                self.board_view.pause_button.update_color_when_pressed(event, mouse_pos)
+                self.board_view.pause_button.execute_command(event, mouse_pos)
+
                 self.board_view.play_button.update_color_when_pressed(event, mouse_pos)
                 self.board_view.play_button.execute_command(event, mouse_pos)
+
                 self.board_view.controller.handle_click(event, mouse_pos)
                 self.board_view.controller.choose_promotion_piece(event, mouse_pos)
             
