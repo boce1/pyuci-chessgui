@@ -35,7 +35,7 @@ class BoardController:
         self.source_square_display = None
         self.target_square_display = None
 
-        self.moves_to_go = 60
+        self.moves_to_go = MOVES_TO_GO_DEFAULT
         self.white_clock = TIME_5_MINUTES
         self.black_clock = TIME_5_MINUTES
         self.last_time = time.time()
@@ -386,6 +386,7 @@ class BoardController:
             self.black_clock = TIME_1_MUNUTES
             self.white_clock = TIME_1_MUNUTES
             self.last_selected_time = (self.white_clock, self.black_clock)
+            self.moves_to_go = MOVES_TO_GO_BLITZ
             self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
 
     def set_time_5_minutes(self):
@@ -393,6 +394,7 @@ class BoardController:
             self.black_clock = TIME_5_MINUTES
             self.white_clock = TIME_5_MINUTES
             self.last_selected_time = (self.white_clock, self.black_clock)
+            self.moves_to_go = MOVES_TO_GO_DEFAULT
             self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
         
     def set_time_10_minutes(self):
@@ -400,6 +402,7 @@ class BoardController:
             self.black_clock = TIME_10_MINUTES
             self.white_clock = TIME_10_MINUTES
             self.last_selected_time = (self.white_clock, self.black_clock)
+            self.moves_to_go = MOVES_TO_GO_DEFAULT
             self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
 
     def change_board_orientation(self):
