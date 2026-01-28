@@ -155,7 +155,7 @@ class BoardView:
                 rank_x = BOARD_X - rank_text.get_width() - 5
                 rank_y = BOARD_Y + i * SQUARE_SIZE + SQUARE_SIZE // 2 - rank_text.get_height() // 2
             else:
-                rank_x = BOARD_X - rank_text.get_width()
+                rank_x = BOARD_X - rank_text.get_width() - 5
                 rank_y = BOARD_Y + (7 - i) * SQUARE_SIZE + SQUARE_SIZE // 2 - rank_text.get_height() // 2
             win.blit(rank_text, (rank_x, rank_y))
 

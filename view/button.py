@@ -1,5 +1,6 @@
 from config import *
 import pygame as pg
+import os
 
 class Button:
     def __init__(self, x, y, width, height, action, text):
@@ -12,9 +13,16 @@ class Button:
         self.message = self.font.render(text, True, BLACK)
         self.color = WHITE
 
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        pics_dir = os.path.join(current_dir, '..', 'pics')
+        pics_dir = os.path.normpath(pics_dir)
+        self.img = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "button.png")).convert_alpha(), (self.width, self.height))
+        self.img.set_alpha(95) # 50% transparent
+
     def draw(self, win):
         pg.draw.rect(win, self.color, (self.x, self.y, self.width, self.height))
-        pg.draw.rect(win, BLACK, (self.x, self.y, self.width, self.height), 3)
+        pg.draw.rect(win, BLACK, (self.x, self.y, self.width, self.height), 2)
+        win.blit(self.img, (self.x, self.y))
         win.blit(self.message, (self.x + self.width // 2 - self.message.get_width() //2,
                                 self.y + self.height // 2 - self.message.get_height() // 2))
 

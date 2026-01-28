@@ -35,10 +35,11 @@ class BoardController:
         self.source_square_display = None
         self.target_square_display = None
 
+        self.moves_to_go = 60
         self.white_clock = TIME_5_MINUTES
         self.black_clock = TIME_5_MINUTES
         self.last_time = time.time()
-        self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock)
+        self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
         self.last_selected_time = (self.white_clock, self.black_clock)
 
         self.game_status = GAME_PAUSED
@@ -385,21 +386,21 @@ class BoardController:
             self.black_clock = TIME_1_MUNUTES
             self.white_clock = TIME_1_MUNUTES
             self.last_selected_time = (self.white_clock, self.black_clock)
-            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock)
+            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
 
     def set_time_5_minutes(self):
         if self.game_status != PLAYING:
             self.black_clock = TIME_5_MINUTES
             self.white_clock = TIME_5_MINUTES
             self.last_selected_time = (self.white_clock, self.black_clock)
-            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock)
+            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
         
     def set_time_10_minutes(self):
         if self.game_status != PLAYING:
             self.black_clock = TIME_10_MINUTES
             self.white_clock = TIME_10_MINUTES
             self.last_selected_time = (self.white_clock, self.black_clock)
-            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock)
+            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
 
     def change_board_orientation(self):
         if self.game_status != PLAYING:
