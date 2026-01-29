@@ -16,7 +16,7 @@ class Button:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         pics_dir = os.path.join(current_dir, '..', 'pics')
         pics_dir = os.path.normpath(pics_dir)
-        self.img = pg.transform.scale(pg.image.load(os.path.join(pics_dir, type)).convert_alpha(), (self.width, self.height))
+        self.img = pg.transform.scale(pg.image.load(os.path.join(pics_dir, type)), (self.width, self.height)).convert_alpha()
         self.img.set_alpha(150) # ((150 / 256) * 100) % transparent
 
     def draw(self, win):

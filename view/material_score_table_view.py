@@ -12,16 +12,16 @@ class MaterialScoreTableView:
             'p': None, 'n': None, 'b': None, 'r': None, 'q': None
         }
 
-        self.pieces_material_images['P'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-pawn.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH))
-        self.pieces_material_images['N'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-knight.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH))
-        self.pieces_material_images['B'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-bishop.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH))
-        self.pieces_material_images['R'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-rook.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH))
-        self.pieces_material_images['Q'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-queen.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH))
-        self.pieces_material_images['p'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-pawn.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH))
-        self.pieces_material_images['n'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-knight.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH))
-        self.pieces_material_images['b'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-bishop.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH))
-        self.pieces_material_images['r'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-rook.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH))
-        self.pieces_material_images['q'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-queen.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH))
+        self.pieces_material_images['P'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-pawn.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
+        self.pieces_material_images['N'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-knight.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
+        self.pieces_material_images['B'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-bishop.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
+        self.pieces_material_images['R'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-rook.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
+        self.pieces_material_images['Q'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-queen.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
+        self.pieces_material_images['p'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-pawn.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
+        self.pieces_material_images['n'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-knight.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
+        self.pieces_material_images['b'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-bishop.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
+        self.pieces_material_images['r'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-rook.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
+        self.pieces_material_images['q'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-queen.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
 
         self.piece_img_cords = {
             'P' : (MATERIAL_SCORE_X, MATERIAL_WHITE_PAWN_Y),

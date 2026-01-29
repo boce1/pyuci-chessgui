@@ -9,6 +9,7 @@ class SearchInfoView:
         self.font = pg.font.SysFont('Consolas', self.font_size, bold=False)
 
     def draw(self, win, search_info):
+        pg.draw.rect(win, WHITE, (SEARCH_INFO_X, SEARCH_INFO_Y, SEARCH_INFO_WIDTH, SEARCH_INFO_HEIGHT))
         pg.draw.rect(win, BLACK, (SEARCH_INFO_X, SEARCH_INFO_Y, SEARCH_INFO_WIDTH, SEARCH_INFO_HEIGHT), 2)
         
         current_y = SEARCH_INFO_Y + GAP_INFO

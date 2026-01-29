@@ -3,7 +3,7 @@ import pygame as pg
 
 class GameStatusView:
     def __init__(self):
-        self.font = pg.font.SysFont('Consolas', int(GAME_STATUS_HEIGHT * 0.75), bold=False)
+        self.font = pg.font.SysFont('Consolas', int(GAME_STATUS_HEIGHT * 0.8), bold=False)
         self.paused_message = self.font.render("Choose time and side", True, BLACK)
         self.playing_message = self.font.render("Game Analysis", True, BLACK)
         self.lose_on_time_white = self.font.render("White lost on time", True, BLACK)

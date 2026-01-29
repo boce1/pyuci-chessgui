@@ -13,14 +13,14 @@ class PromotionTableView:
             'n': None, 'b': None, 'r': None, 'q': None
         }
 
-        self.pieces_promotion_images['N'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-knight.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT))
-        self.pieces_promotion_images['B'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-bishop.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT))
-        self.pieces_promotion_images['R'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-rook.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT))
-        self.pieces_promotion_images['Q'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-queen.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT))
-        self.pieces_promotion_images['n'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-knight.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT))
-        self.pieces_promotion_images['b'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-bishop.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT))
-        self.pieces_promotion_images['r'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-rook.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT))
-        self.pieces_promotion_images['q'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-queen.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT))
+        self.pieces_promotion_images['N'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-knight.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT)).convert_alpha()
+        self.pieces_promotion_images['B'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-bishop.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT)).convert_alpha()
+        self.pieces_promotion_images['R'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-rook.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT)).convert_alpha()
+        self.pieces_promotion_images['Q'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-queen.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT)).convert_alpha()
+        self.pieces_promotion_images['n'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-knight.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT)).convert_alpha()
+        self.pieces_promotion_images['b'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-bishop.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT)).convert_alpha()
+        self.pieces_promotion_images['r'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-rook.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT)).convert_alpha()
+        self.pieces_promotion_images['q'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-queen.png")), (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT)).convert_alpha()
 
     def draw(self, win, is_promoting, playing_side):
         if(is_promoting):

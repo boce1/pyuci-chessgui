@@ -1,7 +1,6 @@
 from config import *
 import pygame as pg
-import time
-import chess
+import os
 from .board_view import BoardView
 
 class MainWindow:
@@ -14,7 +13,7 @@ class MainWindow:
         self.board_view = BoardView()
 
     def draw(self):
-        self.window.fill(WHITE)  # Fill the window with white color
+        self.window.fill(BACKGROUND_COLOR)
         self.board_view.draw(self.window)
         pg.display.update()  # Update the display
 
@@ -24,7 +23,6 @@ class MainWindow:
 
         while running:
             mouse_pos = pg.mouse.get_pos()
-            mouse_state = pg.mouse.get_pressed()
             clock.tick(FPS) 
 
             for event in pg.event.get():
