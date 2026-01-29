@@ -57,15 +57,20 @@ class BoardView:
         self.draw_board_background(win)
         self.draw_board(win)
         self.show_files_ranks(win)
-        self.material_table.draw(win, self.controller.absent_pices_num)
-        self.draw_circle_indicating_turn(win)
-        self.draw_square_in_check(win)
-        self.draw_made_move(win)
-        self.draw_legal_moves_for_source_square(win)
 
-        self.time_table.draw(win, self.controller.white_clock, self.controller.black_clock)
-        self.status_table.draw(win, self.controller.game_status)
-        self.search_table.draw(win, self.controller.search_info)
+        with self.controller.board_lock:
+            self.material_table.draw(win, self.controller.absent_pices_num)
+            self.draw_circle_indicating_turn(win)
+            self.draw_square_in_check(win)
+            self.draw_made_move(win)
+            self.draw_legal_moves_for_source_square(win)
+
+            self.time_table.draw(win, self.controller.white_clock, self.controller.black_clock)
+            self.status_table.draw(win, self.controller.game_status)
+
+        with self.controller.info_lock:   
+            self.search_table.draw(win, self.controller.search_info)
+
         self.play_button.draw(win)
         self.pause_button.draw(win)
         self.one_minutes_button.draw(win)

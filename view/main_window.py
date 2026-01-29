@@ -56,7 +56,7 @@ class MainWindow:
             self.draw()
             self.board_view.controller.update_time()
             self.board_view.controller.engine_make_move()
-            self.board_view.controller.update_game_status()
+            # self.board_view.controller.update_game_status()
             self.board_view.controller.reset_game()
 
         pg.quit()

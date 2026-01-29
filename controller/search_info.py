@@ -5,9 +5,10 @@ class SearchInfo:
         self.principle_variation = None
 
     def update(self, info):
-        if "score" in info:
-            self.eval = info["score"].relative  # Score from the perspective of the side to move
-    
+        if "score" in info:    
+            score_obj = info["score"].relative
+            self.eval = score_obj.score()
+
         # 2. Depth
         if "depth" in info:
             self.depth = info['depth']

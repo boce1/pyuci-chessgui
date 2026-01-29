@@ -60,6 +60,9 @@ class BoardController:
 
         self.search_info = SearchInfo()
 
+        self.board_lock = threading.Lock()
+        self.info_lock = threading.Lock()
+
     def load_engine(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         engine_dir = os.path.join(current_dir, '..', 'engines')
@@ -157,12 +160,14 @@ class BoardController:
                     self.pending_move_to_square = square # Remember the target
                     return # STOP HERE. Don't push to board yet.
 
-                self.source_square_display = move_to_make.from_square
-                self.target_square_display = move_to_make.to_square
+                with self.board_lock:
+                    self.source_square_display = move_to_make.from_square
+                    self.target_square_display = move_to_make.to_square
 
-                self.play_sound(move_to_make) # PLAY SOUND NEEDS TO BE BEFORE MOVE PUSH
-                self.board.push(move_to_make)
-                self.get_absent_pieces()
+                    self.play_sound(move_to_make) # PLAY SOUND NEEDS TO BE BEFORE MOVE PUSH
+                    self.board.push(move_to_make)
+                    self.get_absent_pieces()
+                    self.update_game_status()
 
                 self.source_square = None # Reset for next move
                 self.legal_moves_for_source_square = []
@@ -209,19 +214,20 @@ class BoardController:
             final_move = chess.Move(self.source_square, self.pending_move_to_square, promotion=self.promotion_piece)
             
             if final_move in self.board.legal_moves:
-                self.play_sound(final_move)
-                self.board.push(final_move)
-                self.get_absent_pieces()
+                with self.board_lock:
+                    self.play_sound(final_move)
+                    self.board.push(final_move)
+                    self.get_absent_pieces()
+                    self.update_game_status()
 
+                    self.source_square_display = final_move.from_square
+                    self.target_square_display = final_move.to_square
 
-            self.source_square_display = final_move.from_square
-            self.target_square_display = final_move.to_square
-            
-            self.promotion_piece = None
-            self.pending_move_to_square = None
-            self.source_square = None # Reset for next move
-            self.legal_moves_for_source_square = []
-            self.is_promoting = False
+                self.promotion_piece = None
+                self.pending_move_to_square = None
+                self.source_square = None # Reset for next move
+                self.legal_moves_for_source_square = []
+                self.is_promoting = False
         
         
 
@@ -264,11 +270,13 @@ class BoardController:
 
                 result = analysis.wait()
                 if result.move and not self.is_force_quit_engine:
-                    self.source_square_display = result.move.from_square
-                    self.target_square_display = result.move.to_square
-                    self.play_sound(result.move)
-                    self.board.push(result.move)
-                    self.get_absent_pieces()
+                    with self.board_lock:
+                        self.source_square_display = result.move.from_square
+                        self.target_square_display = result.move.to_square
+                        self.play_sound(result.move)
+                        self.board.push(result.move)
+                        self.get_absent_pieces()
+                        self.update_game_status()
 
         except (chess.engine.EngineTerminatedError, chess.engine.AnalysisComplete):
             print("Engine stopped or analysis complete.")
@@ -279,7 +287,8 @@ class BoardController:
             self.is_engine_thinking = False
 
     def get_info_analysis(self, info):
-        self.search_info.update(info)
+        with self.info_lock:
+            self.search_info.update(info)
 
 
     def update_time(self):
