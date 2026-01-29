@@ -7,6 +7,7 @@ from .promotion_table_view import PromotionTableView
 from .material_score_table_view import MaterialScoreTableView
 from .time_view import TimeView
 from .game_status_view import GameStatusView
+from .search_info_view import SearchInfoView
 from .button import Button
 
 class BoardView:
@@ -25,8 +26,9 @@ class BoardView:
         self.material_table = MaterialScoreTableView()
         self.time_table = TimeView()
         self.status_table = GameStatusView()
-        self.play_button = Button(PLAY_BUTTON_X, PLAY_BUTTON_Y, PLAY_BUTTON_WIDTH, PLAY_BUTTON_HEIGHT, self.controller.play_button_action, "Start new game")
-        self.pause_button = Button(PAUSE_BUTTON_X, PAUSE_BUTTON_Y, PAUSE_BUTTON_WIDTH, PAUSE_BUTTON_HEIGHT, self.controller.stop_game, "Stop the game")
+        self.search_table = SearchInfoView()
+        self.play_button = Button(PLAY_BUTTON_X, PLAY_BUTTON_Y, PLAY_BUTTON_WIDTH, PLAY_BUTTON_HEIGHT, self.controller.play_button_action, "Start new game", BUTTON_START)
+        self.pause_button = Button(PAUSE_BUTTON_X, PAUSE_BUTTON_Y, PAUSE_BUTTON_WIDTH, PAUSE_BUTTON_HEIGHT, self.controller.stop_game, "Stop the game", BUTTON_STOP)
         self.one_minutes_button = Button(TIME_BUTTON_1_X, TIME_BUTTON_1_Y, TIME_BUTTON_1_WIDTH, TIME_BUTTON_1_HEIGHT, self.controller.set_TIME_1_MUNUTES, "1 munute")
         self.five_minutes_button = Button(TIME_BUTTON_2_X, TIME_BUTTON_2_Y, TIME_BUTTON_2_WIDTH, TIME_BUTTON_2_HEIGHT, self.controller.set_time_5_minutes, "5 munutes")
         self.ten_minutes_button = Button(TIME_BUTTON_3_X, TIME_BUTTON_3_Y, TIME_BUTTON_3_WIDTH, TIME_BUTTON_3_HEIGHT, self.controller.set_time_10_minutes, "10 munutes")
@@ -63,6 +65,7 @@ class BoardView:
 
         self.time_table.draw(win, self.controller.white_clock, self.controller.black_clock)
         self.status_table.draw(win, self.controller.game_status)
+        self.search_table.draw(win, self.controller.search_info)
         self.play_button.draw(win)
         self.pause_button.draw(win)
         self.one_minutes_button.draw(win)

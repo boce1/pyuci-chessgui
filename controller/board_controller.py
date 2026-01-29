@@ -4,9 +4,8 @@ import os
 import pygame as pg
 import threading
 import time
-import sys
 from config import *
-from view.promotion_table_view import PromotionTableView
+from .search_info import SearchInfo
 
 class BoardController:
     def __init__(self):
@@ -58,6 +57,8 @@ class BoardController:
         sounds_dir = os.path.normpath(sounds_dir)
         self.move_sound = pg.mixer.Sound(os.path.join(sounds_dir, "move.mp3"))
         self.capture_sound = pg.mixer.Sound(os.path.join(sounds_dir, "capture.mp3"))
+
+        self.search_info = SearchInfo()
 
     def load_engine(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -254,6 +255,7 @@ class BoardController:
                         self.target_square_display = None
                         analysis.stop()
                         break
+                    self.get_info_analysis(info)
                     
                 if self.is_force_quit_engine or self.game_status == GAME_PAUSED:
                     self.source_square_display = None
@@ -275,6 +277,9 @@ class BoardController:
         finally:
             self.current_analysis = None
             self.is_engine_thinking = False
+
+    def get_info_analysis(self, info):
+        self.search_info.update(info)
 
 
     def update_time(self):
@@ -357,6 +362,7 @@ class BoardController:
             self.source_square_display = None
             self.target_square_display = None
             
+            self.search_info = SearchInfo()
 
             #self.game_status = GAME_PAUSED
             self.get_absent_pieces()

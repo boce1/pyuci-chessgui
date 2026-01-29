@@ -15,3 +15,7 @@ TIME_10_MINUTES = 10 * 60
 
 MOVES_TO_GO_DEFAULT = 60
 MOVES_TO_GO_BLITZ = 80
+
+BUTTON_START = "button_2.png"
+BUTTON_STOP = "button_2.png"
+DEFAULT_BUTTON = "button.png"
