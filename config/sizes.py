@@ -1,5 +1,5 @@
 # screen
-FPS = 60
+FPS = 30
 
 SCREEN_WIDTH = 1500 # Extra space for UI elements
 SCREEN_HEIGHT = SCREEN_WIDTH - 600
