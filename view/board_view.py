@@ -6,22 +6,25 @@ import chess
 from .promotion_table_view import PromotionTableView
 from .material_score_table_view import MaterialScoreTableView
 from .time_view import TimeView
+from .game_status_view import GameStatusView
 from .button import Button
 
 class BoardView:
     def __init__(self):
-
+        pg.font.init()
+        
         self.controller = BoardController()
+
         self.pieces_images = {
             'P': None, 'N': None, 'B': None, 'R': None, 'Q': None, 'K': None,
             'p': None, 'n': None, 'b': None, 'r': None, 'q': None, 'k': None
         }
         self.load_pictures()
-        pg.font.init()
         self.font = pg.font.SysFont('Consolas', int(SQUARE_SIZE * 0.3), bold=True)
         self.promotion_table = PromotionTableView()
         self.material_table = MaterialScoreTableView()
         self.time_table = TimeView()
+        self.status_table = GameStatusView()
         self.play_button = Button(PLAY_BUTTON_X, PLAY_BUTTON_Y, PLAY_BUTTON_WIDTH, PLAY_BUTTON_HEIGHT, self.controller.play_button_action, "Start new game")
         self.pause_button = Button(PAUSE_BUTTON_X, PAUSE_BUTTON_Y, PAUSE_BUTTON_WIDTH, PAUSE_BUTTON_HEIGHT, self.controller.stop_game, "Stop the game")
         self.one_minutes_button = Button(TIME_BUTTON_1_X, TIME_BUTTON_1_Y, TIME_BUTTON_1_WIDTH, TIME_BUTTON_1_HEIGHT, self.controller.set_TIME_1_MUNUTES, "1 munute")
@@ -59,6 +62,7 @@ class BoardView:
         self.draw_legal_moves_for_source_square(win)
 
         self.time_table.draw(win, self.controller.white_clock, self.controller.black_clock)
+        self.status_table.draw(win, self.controller.game_status)
         self.play_button.draw(win)
         self.pause_button.draw(win)
         self.one_minutes_button.draw(win)
@@ -166,7 +170,7 @@ class BoardView:
             color = BLACK
 
         pg.draw.circle(win, color, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS)
-        pg.draw.circle(win, BLACK, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS, 2)
+        pg.draw.circle(win, BLACK, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS, 3)
 
     def draw_square_in_check(self, win):
         # Check both colors because the turn changes immediately after a move

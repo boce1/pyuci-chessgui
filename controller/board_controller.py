@@ -10,6 +10,8 @@ from view.promotion_table_view import PromotionTableView
 
 class BoardController:
     def __init__(self):
+        pg.mixer.init()
+
         fen = chess.STARTING_FEN
         # fen = check_fen  # For testing purposes
         # fen = pawn_promotion_fen
@@ -51,6 +53,11 @@ class BoardController:
 
         self.get_absent_pieces()
 
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        sounds_dir = os.path.join(current_dir, '..', 'sounds')
+        sounds_dir = os.path.normpath(sounds_dir)
+        self.move_sound = pg.mixer.Sound(os.path.join(sounds_dir, "move.mp3"))
+        self.capture_sound = pg.mixer.Sound(os.path.join(sounds_dir, "capture.mp3"))
 
     def load_engine(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -83,26 +90,6 @@ class BoardController:
             return None
 
         return chess.square(file, rank)
-
-    def choose_source_square(self, event, mouse_pos):
-        if self.is_left_mouse_button_down(event):
-            square = self.get_square_from_mouse_pos(mouse_pos)
-            if square != None:
-                self.source_square = square
-                #piece = self.board.piece_at(square)
-                self.get_legal_moves_for_source_square()
-
-    def choose_target_square(self, event, mouse_pos):
-        if self.is_left_mouse_button_down(event):
-            square = self.get_square_from_mouse_pos(mouse_pos)
-            if square != None and self.source_square != None and len(self.legal_moves_for_source_square) > 0:
-                for m in self.legal_moves_for_source_square:
-                    if m.to_square == square:
-                        self.board.push(m)
-                        self.source_square = None
-                        self.get_legal_moves_for_source_square()
-                        self.get_absent_pieces()
-                        return
 
     def get_legal_moves_for_source_square(self):
         self.legal_moves_for_source_square = []
@@ -172,6 +159,7 @@ class BoardController:
                 self.source_square_display = move_to_make.from_square
                 self.target_square_display = move_to_make.to_square
 
+                self.play_sound(move_to_make) # PLAY SOUND NEEDS TO BE BEFORE MOVE PUSH
                 self.board.push(move_to_make)
                 self.get_absent_pieces()
 
@@ -220,9 +208,11 @@ class BoardController:
             final_move = chess.Move(self.source_square, self.pending_move_to_square, promotion=self.promotion_piece)
             
             if final_move in self.board.legal_moves:
+                self.play_sound(final_move)
                 self.board.push(final_move)
                 self.get_absent_pieces()
-            
+
+
             self.source_square_display = final_move.from_square
             self.target_square_display = final_move.to_square
             
@@ -274,6 +264,7 @@ class BoardController:
                 if result.move and not self.is_force_quit_engine:
                     self.source_square_display = result.move.from_square
                     self.target_square_display = result.move.to_square
+                    self.play_sound(result.move)
                     self.board.push(result.move)
                     self.get_absent_pieces()
 
@@ -310,15 +301,18 @@ class BoardController:
 
     def update_game_status(self):
         if self.board.is_checkmate():
-            self.game_status = CHECKMATE
+            if self.board.turn == chess.WHITE:
+                self.game_status = CHECKMATE_BY_BLACK
+            else:
+                self.game_status = CHECKMATE_BY_WHITE
         elif self.board.is_stalemate():
             self.game_status = STALEMATE
         elif self.board.is_insufficient_material():
             self.game_status = INSUFFICIENT_MATERIAL
         elif self.white_clock == 0:
-            self.game_status = TIME_PASSED
+            self.game_status = TIME_PASSED_WHITE
         elif self.black_clock == 0:
-            self.game_status = TIME_PASSED
+            self.game_status = TIME_PASSED_BLACK
 
     def stop_game(self):
         if self.game_status == PLAYING:
@@ -364,7 +358,7 @@ class BoardController:
             self.target_square_display = None
             
 
-            self.game_status = GAME_PAUSED
+            #self.game_status = GAME_PAUSED
             self.get_absent_pieces()
 
             self.board.turn = chess.WHITE
@@ -428,6 +422,13 @@ class BoardController:
             elif p in ('Q', 'q'):
                 self.absent_pices_num[p] = 1 - self.absent_pices_num[p]
 
+    def play_sound(self, move):
+        if self.board.is_capture(move):
+            self.capture_sound.play()
+            return
+        else:
+            self.move_sound.play()
+            return
 
     def shut_down_engine(self):
         self.is_force_quit_engine = True

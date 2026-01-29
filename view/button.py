@@ -21,7 +21,7 @@ class Button:
 
     def draw(self, win):
         pg.draw.rect(win, self.color, (self.x, self.y, self.width, self.height))
-        pg.draw.rect(win, BLACK, (self.x, self.y, self.width, self.height), 2)
+        pg.draw.rect(win, BLACK, (self.x, self.y, self.width, self.height), 3)
         win.blit(self.img, (self.x, self.y))
         win.blit(self.message, (self.x + self.width // 2 - self.message.get_width() //2,
                                 self.y + self.height // 2 - self.message.get_height() // 2))

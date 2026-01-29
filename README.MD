@@ -55,3 +55,14 @@ The binaries are included in `engines` directory. There are executables for `Win
 This chess gui is cross-platform compatible.
 
 The source code of the engine: https://github.com/boce1/cincinnatus.git
+
+### Refrences
+
+- The sound effects are from `Lichess` - https://github.com/lichess-org
+- The `NNUE probe` used to integrate `Stockfish NNUE` - https://github.com/dshawul/nnue-probe
+- PNGs for pieces - https://greenchess.net/info.php?item=downloads
+
+### TO DO:
+- add Licence
+- add animatio when moving a picese
+- add information about cp of the board and information about principal variation moves
