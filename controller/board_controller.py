@@ -80,6 +80,8 @@ class BoardController:
             chess.C8: (chess.A8, chess.D8)  # Black Queenside
         }
 
+        self.current_search_id = 0
+
     def load_engine(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         engine_dir = os.path.join(current_dir, '..', 'engines')
@@ -262,78 +264,82 @@ class BoardController:
                 self.source_square = None
                 self.is_promoting = False
         
-        
 
     def engine_make_move(self):
-        # Determine if it is actually the engine's turn to move
         is_engine_turn = (self.white_on_bottom and self.board.turn == chess.BLACK) or \
                          (not self.white_on_bottom and self.board.turn == chess.WHITE)
 
         if is_engine_turn and not self.is_engine_thinking and self.game_status == PLAYING:
-            # CRITICAL: Do not start if an animation is active or a move is pending finalize
             if self.active_animation is not None or self.pending_move is not None:
                 return
 
             if self.engine is None:
                 return
+            
+            with self.board_lock:
+                self.current_search_id = time.time() # Create a unique ID for this search
+                search_id = self.current_search_id
+                board_copy = self.board.copy()
 
             self.is_engine_thinking = True
-            # Use a copy of the board to prevent the engine from reading 
-            # a state that changes mid-calculation
-            board_copy = self.board.copy()
+            # Pass the ID into the thread
+            thread = threading.Thread(target=self.run_engine, args=(board_copy, search_id))
+            thread.daemon = True
+            thread.start()
 
-            engine_thread = threading.Thread(target=self.run_engine, args=(board_copy,))
-            engine_thread.daemon = True
-            engine_thread.start()
-
-    def run_engine(self, board_copy):
-        """ This runs in the background thread """
+    def run_engine(self, board_copy, search_id):
+        """ Runs in background thread with a thread-safe board snapshot """
         try:
             if not self.engine or self.is_force_quit_engine or self.game_status != PLAYING:
                 return
-
-            self.is_engine_thinking = True
-            
+    
+            # Start analysis on the copy
             with self.engine.analysis(board_copy, self.time_limit) as analysis:
                 self.current_analysis = analysis
+                
                 for info in analysis:
                     if self.is_force_quit_engine or self.game_status != PLAYING:
                         analysis.stop()
                         break
                     self.get_info_analysis(info)
-
-                result = analysis.wait()
-
+    
+                
+                try:
+                    result = analysis.wait()
+                except (chess.engine.EngineError, chess.InvalidMoveError) as e:
+                    print(f"Engine returned an invalid move or protocol error: {e}")
+                    return
+    
                 if result.move and not self.is_force_quit_engine and self.game_status == PLAYING:
                     with self.board_lock:
-                        # 1. Check legality against the REAL board
+                        if search_id != self.current_search_id:
+                            print("Discarding move from a previous/cancelled game.")
+                            return
+
+                        # Verify move is still legal on the MAIN board
                         if result.move in self.board.legal_moves:
-                            # Primary Move Setup (King or Piece)
                             start_px = self.get_square_coords(result.move.from_square)
                             end_px = self.get_square_coords(result.move.to_square)
                             piece = self.board.piece_at(result.move.from_square)
-
+    
                             if piece:
                                 self.active_animation = MoveAnimation(piece.symbol(), start_px, end_px)
                                 self.pending_move = result.move
-
-                                # 2. SECONDARY ANIMATION (For Bot Castling)
+    
                                 if self.board.is_castling(result.move):
                                     r_from, r_to = self.castle_map[result.move.to_square]
                                     r_start_px = self.get_square_coords(r_from)
                                     r_end_px = self.get_square_coords(r_to)
                                     r_piece = self.board.piece_at(r_from)
-                                    
                                     if r_piece:
                                         self.secondary_animation = MoveAnimation(r_piece.symbol(), r_start_px, r_end_px)
                         else:
-                            print(f"Engine move {result.move} became illegal. Board may have been reset.")
-
-        except (chess.engine.EngineTerminatedError, chess.engine.AnalysisComplete) as e:
-            print(f"Engine info: {e}")
+                            print(f"Engine suggested move {result.move}, but it's no longer legal.")
+    
+        except (chess.engine.EngineTerminatedError, chess.engine.AnalysisComplete):
+            pass # Normal engine shutdown or analysis finish
         except Exception as e:
-            # This captures the 'Unexpected output' error gracefully
-            print(f"UCI Protocol caught engine noise: {e}")
+            print(f"General Engine Thread Error: {e}")
         finally:
             self.current_analysis = None
             self.is_engine_thinking = False
@@ -388,62 +394,55 @@ class BoardController:
             self.game_status = TIME_PASSED_BLACK
 
     def stop_game(self):
-        if self.game_status == PLAYING:
-            self.game_status = GAME_PAUSED
-            self.source_square_display = None
-            self.target_square_display = None
-            self.source_square = None
-            self.legal_moves_for_source_square = []
+        with self.board_lock:
+            if self.game_status == PLAYING:
+                self.game_status = GAME_PAUSED
 
-            self.is_engine_thinking = False
-            self.current_analysis = None
-            self.is_force_quit_engine = False
+                self.source_square = None
+                self.legal_moves_for_source_square = []
 
-            self.pending_move = None
-            self.is_promoting = False
-            self.promotion_piece = None
+                self.is_engine_thinking = False
+                self.current_analysis = None
+                self.is_force_quit_engine = False
 
-            self.source_square_display = None
-            self.target_square_display = None
-            
-            self.active_animation = None    # Clear the "ghost" pawn animation
-            self.pending_move = None        # Clear the "ghost" move
-            self.secondary_animation = None
-            self.is_promoting = False       # Stop the promotion state
+                self.is_promoting = False
+                self.promotion_piece = None
 
-            self.game_status = GAME_PAUSED
-            self.get_absent_pieces()
+                self.source_square_display = None
+                self.target_square_display = None
 
-            self.board.turn = chess.WHITE
+                self.active_animation = None    # Clear the "ghost" pawn animation
+                self.pending_move = None        # Clear the "ghost" move
+                self.secondary_animation = None
+
+                self.get_absent_pieces()
+
+                self.board.turn = chess.WHITE
 
     def reset_game(self):
-        if not self.is_engine_thinking and self.game_status != PLAYING and self.current_analysis == None:
-            self.source_square_display = None
-            self.target_square_display = None
-            self.source_square = None
-            self.legal_moves_for_source_square = []
+        with self.board_lock:
+            if not self.is_engine_thinking and self.game_status != PLAYING and self.current_analysis == None:
+                self.source_square = None
+                self.legal_moves_for_source_square = []
 
-            self.is_engine_thinking = False
-            self.current_analysis = None
-            self.is_force_quit_engine = False
+                self.is_engine_thinking = False
+                self.current_analysis = None
+                self.is_force_quit_engine = False
 
-            self.pending_move = None
-            self.is_promoting = False
-            self.promotion_piece = None
+                self.is_promoting = False
+                self.promotion_piece = None
 
-            self.source_square_display = None
-            self.target_square_display = None
-            
-            self.search_info = SearchInfo()
+                self.source_square_display = None
+                self.target_square_display = None
 
-            # self.game_status = GAME_PAUSED  # Add this to stop the clock
-            self.active_animation = None    # Clear the "ghost" pawn animation
-            self.pending_move = None        # Clear the "ghost" move
-            self.secondary_animation = None
-            self.is_promoting = False       # Stop the promotion state
-            self.get_absent_pieces()
+                self.search_info = SearchInfo()
 
-            self.board.turn = chess.WHITE
+                self.active_animation = None    # Clear the "ghost" pawn animation
+                self.pending_move = None        # Clear the "ghost" move
+                self.secondary_animation = None
+                self.get_absent_pieces()
+
+                self.board.turn = chess.WHITE
 
     def play_button_action(self):
         if self.game_status != PLAYING:
