@@ -72,9 +72,7 @@ class BoardView:
             self.material_table.draw(win, self.controller.absent_pices_num)
             self.draw_circle_indicating_turn(win)
             self.time_table.draw(win, self.controller.white_clock, self.controller.black_clock)
-            self.status_table.draw(win, self.controller.game_status)
-            
-        with self.controller.info_lock:   
+            self.status_table.draw(win, self.controller.game_status) 
             self.search_table.draw(win, self.controller.search_info)
 
         # 5. UI Buttons

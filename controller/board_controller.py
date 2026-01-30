@@ -66,7 +66,6 @@ class BoardController:
         self.search_info = SearchInfo()
 
         self.board_lock = threading.Lock()
-        self.info_lock = threading.Lock()
 
         # for pices moving animation
         self.active_animation = None
@@ -345,40 +344,30 @@ class BoardController:
             self.is_engine_thinking = False
 
     def get_info_analysis(self, info):
-        with self.info_lock:
+        with self.board_lock:
             self.search_info.update(info)
 
 
     def update_time(self):
-        if self.game_status != PLAYING:
-        # Crucial: Keep last_time updated so when we DO start, 
-        # there isn't a huge "jump" in time.
-            self.last_time = time.time()
-            return
-        
-        # 1. Calculate how much time passed since the last update
         current_time = time.time()
         delta_time = current_time - self.last_time
         self.last_time = current_time
 
-        # 2. Subtract from the active player
+        if self.game_status != PLAYING:
+            return
+        
         if self.board.turn == chess.WHITE:
-            self.white_clock -= delta_time
+            self.white_clock = max(0, self.white_clock - delta_time)
         else:
-            self.black_clock -= delta_time
+            self.black_clock = max(0, self.black_clock - delta_time)
 
-        # 3. Ensure clocks don't go below zero
-        self.white_clock = max(0, self.white_clock)
-        self.black_clock = max(0, self.black_clock)
-
-        if self.white_clock == 0:
-            self.game_status = TIME_PASSED_WHITE
-            self.generic_notification_sound.play()
-        if self.black_clock == 0:
-            self.game_status = TIME_PASSED_BLACK
-            self.generic_notification_sound.play()
+        if self.white_clock == 0 or self.black_clock == 0:
+            with self.board_lock: # Protect status change
+                self.update_game_status()
+                self.generic_notification_sound.play()
 
     def update_game_status(self):
+        # called when pushing and it doesnt need lock here
         if self.board.is_checkmate():
             if self.board.turn == chess.WHITE:
                 self.game_status = CHECKMATE_BY_BLACK
@@ -449,8 +438,6 @@ class BoardController:
             self.board.set_fen(chess.STARTING_FEN)
             self.reset_game()
     
-            # self.white_clock = TIME_1_MUNUTES
-            # self.black_clock = TIME_1_MUNUTES
             self.white_clock, self.black_clock = self.last_selected_time
             self.last_time = time.time()
     
@@ -513,9 +500,6 @@ class BoardController:
                                 INSUFFICIENT_MATERIAL, TIME_PASSED_WHITE, TIME_PASSED_BLACK):
             self.generic_notification_sound.play()
 
-    def play_sound_time_passed(self):
-        if self.game_status in (TIME_PASSED_WHITE, TIME_PASSED_BLACK):
-            self.generic_notification_sound.play()
 
     def procces_animation_and_push_move(self, dt):
         if self.active_animation:
