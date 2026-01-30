@@ -4,79 +4,70 @@ from config import *
 
 class MaterialScoreTableView:
     def __init__(self):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        pics_dir = os.path.join(current_dir, '..', 'pics')
-        pics_dir = os.path.normpath(pics_dir)
-        self.pieces_material_images = {
-            'P': None, 'N': None, 'B': None, 'R': None, 'Q': None,
-            'p': None, 'n': None, 'b': None, 'r': None, 'q': None
-        }
-
-        self.pieces_material_images['P'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-pawn.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
-        self.pieces_material_images['N'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-knight.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
-        self.pieces_material_images['B'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-bishop.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
-        self.pieces_material_images['R'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-rook.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
-        self.pieces_material_images['Q'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "white-queen.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
-        self.pieces_material_images['p'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-pawn.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
-        self.pieces_material_images['n'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-knight.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
-        self.pieces_material_images['b'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-bishop.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
-        self.pieces_material_images['r'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-rook.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
-        self.pieces_material_images['q'] = pg.transform.scale(pg.image.load(os.path.join(pics_dir, "black-queen.png")), (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)).convert_alpha()
-
-        self.piece_img_cords = {
-            'P' : (MATERIAL_SCORE_X, MATERIAL_WHITE_PAWN_Y),
-            'N' : (MATERIAL_SCORE_X, MATERIAL_WHITE_KNIGHT_Y),
-            'B' : (MATERIAL_SCORE_X, MATERIAL_WHITE_BISHOP_Y),
-            'R' : (MATERIAL_SCORE_X, MATERIAL_WHITE_ROOK_Y),
-            'Q' : (MATERIAL_SCORE_X, MATERIAL_WHITE_QUEEN_Y),
-            'p' : (MATERIAL_SCORE_X, MATERIAL_BLACK_PAWN_Y),
-            'n' : (MATERIAL_SCORE_X, MATERIAL_BLACK_KNIGHT_Y),
-            'b' : (MATERIAL_SCORE_X, MATERIAL_BLACK_BISHOP_Y),
-            'r' : (MATERIAL_SCORE_X, MATERIAL_BLACK_ROOK_Y),
-            'q' : (MATERIAL_SCORE_X, MATERIAL_BLACK_QUEEN_Y)
-        }
-
+        pg.font.init()
         self.font = pg.font.SysFont("Consolas", int(MATERIAL_SCORE_WIDTH * 0.6), bold=True)
-        self.message_1_x = self.font.render("", True, BLACK)
-        self.message_2_x = self.font.render("2x", True, BLACK)
-        self.message_3_x = self.font.render("3x", True, BLACK)
-        self.message_4_x = self.font.render("4x", True, BLACK)
-        self.message_5_x = self.font.render("5x", True, BLACK)
-        self.message_6_x = self.font.render("6x", True, BLACK)
-        self.message_7_x = self.font.render("7x", True, BLACK)
-        self.message_8_x = self.font.render("8x", True, BLACK)
+        
+        self.pieces_material_images = {}
+        self.piece_img_coords = {}
+        
+        self.load_resources()
 
-    def get_message(self, num):
-        if num == 1:
-            return self.message_1_x
-        elif num == 2:
-            return self.message_2_x
-        elif num == 3:
-            return self.message_3_x
-        elif num == 4:
-            return self.message_4_x
-        elif num == 5:
-            return self.message_5_x
-        elif num == 6:
-            return self.message_6_x
-        elif num == 7:
-            return self.message_7_x
-        elif num == 8:
-            return self.message_8_x
-        return None
+    def load_resources(self):
+        """Data-driven loading similar to BoardView."""
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        pics_dir = os.path.normpath(os.path.join(current_dir, '..', 'pics'))
+
+        # Mapping symbols to filenames
+        mapping = {
+            'P': "white-pawn.png",   'N': "white-knight.png", 'B': "white-bishop.png",
+            'R': "white-rook.png",   'Q': "white-queen.png",
+            'p': "black-pawn.png",   'n': "black-knight.png", 'b': "black-bishop.png",
+            'r': "black-rook.png",   'q': "black-queen.png"
+        }
+
+        # Mapping symbols to Y coordinates (X is constant)
+        y_coords = {
+            'P': MATERIAL_WHITE_PAWN_Y,   'N': MATERIAL_WHITE_KNIGHT_Y, 
+            'B': MATERIAL_WHITE_BISHOP_Y, 'R': MATERIAL_WHITE_ROOK_Y, 
+            'Q': MATERIAL_WHITE_QUEEN_Y,
+            'p': MATERIAL_BLACK_PAWN_Y,   'n': MATERIAL_BLACK_KNIGHT_Y, 
+            'b': MATERIAL_BLACK_BISHOP_Y, 'r': MATERIAL_BLACK_ROOK_Y, 
+            'q': MATERIAL_BLACK_QUEEN_Y
+        }
+
+        for symbol, filename in mapping.items():
+            path = os.path.join(pics_dir, filename)
+            # Load and scale
+            img = pg.image.load(path).convert_alpha()
+            self.pieces_material_images[symbol] = pg.transform.scale(
+                img, (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)
+            )
+            # Store coordinates
+            self.piece_img_coords[symbol] = (MATERIAL_SCORE_X, y_coords[symbol])
 
     def draw_piece_material(self, win, piece_char, num):
-        message = self.get_message(num)
-        if message == None:
+        """Draws the piece icon and the quantity multiplier (e.g., 2x)."""
+        if num <= 0:
             return
 
         img = self.pieces_material_images[piece_char]
-        cords = self.piece_img_cords[piece_char]
-        win.blit(img, cords)
-        win.blit(message, (cords[0] - message.get_width(), 
-                                    cords[1] + img.get_height() // 2 - message.get_height() // 2))
+        coords = self.piece_img_coords[piece_char]
         
-    def draw(self, win, piece_map):
-        for key in self.piece_img_cords.keys():
-            self.draw_piece_material(win, key, piece_map[key])
+        # 1. Draw the piece icon
+        win.blit(img, coords)
 
+        # 2. Draw the multiplier text (only if > 1)
+        if num > 1:
+            text_str = f"{num}x"
+            message = self.font.render(text_str, True, BLACK)
+            
+            # Position text to the left of the image, vertically centered
+            text_x = coords[0] - message.get_width() - 5  # 5px padding
+            text_y = coords[1] + (img.get_height() // 2) - (message.get_height() // 2)
+            win.blit(message, (text_x, text_y))
+
+    def draw(self, win, absent_pieces_map):
+        """Matches BoardView's signature, iterating through the pieces."""
+        for symbol in self.piece_img_coords.keys():
+            quantity = absent_pieces_map.get(symbol, 0)
+            self.draw_piece_material(win, symbol, quantity)
