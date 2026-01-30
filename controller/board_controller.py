@@ -246,9 +246,10 @@ class BoardController:
 
             if final_move in self.board.legal_moves:
                 with self.board_lock:
+                    is_capture = self.board.is_capture(final_move)
                     self.board.push(final_move)
                     self.update_game_status()
-                    self.play_sound(final_move)
+                    self.play_sound(is_capture)
                     self.get_absent_pieces()
 
                     self.source_square_display = final_move.from_square
@@ -292,7 +293,7 @@ class BoardController:
                 return
 
             self.is_engine_thinking = True
-            # Use the board_copy instead of self.board
+            
             with self.engine.analysis(board_copy, self.time_limit) as analysis:
                 self.current_analysis = analysis
                 for info in analysis:
@@ -303,10 +304,11 @@ class BoardController:
 
                 result = analysis.wait()
 
-                if result.move and not self.is_force_quit_engine:
+                if result.move and not self.is_force_quit_engine and self.game_status == PLAYING:
                     with self.board_lock:
-                        # Check legality against the REAL board, not the copy
+                        # 1. Check legality against the REAL board
                         if result.move in self.board.legal_moves:
+                            # Primary Move Setup (King or Piece)
                             start_px = self.get_square_coords(result.move.from_square)
                             end_px = self.get_square_coords(result.move.to_square)
                             piece = self.board.piece_at(result.move.from_square)
@@ -314,13 +316,24 @@ class BoardController:
                             if piece:
                                 self.active_animation = MoveAnimation(piece.symbol(), start_px, end_px)
                                 self.pending_move = result.move
-                        else:
-                            print(f"Engine move {result.move} became illegal.")
 
-        except (chess.engine.EngineTerminatedError, chess.engine.AnalysisComplete):
-            print("Engine stopped or analysis complete.")
+                                # 2. SECONDARY ANIMATION (For Bot Castling)
+                                if self.board.is_castling(result.move):
+                                    r_from, r_to = self.castle_map[result.move.to_square]
+                                    r_start_px = self.get_square_coords(r_from)
+                                    r_end_px = self.get_square_coords(r_to)
+                                    r_piece = self.board.piece_at(r_from)
+                                    
+                                    if r_piece:
+                                        self.secondary_animation = MoveAnimation(r_piece.symbol(), r_start_px, r_end_px)
+                        else:
+                            print(f"Engine move {result.move} became illegal. Board may have been reset.")
+
+        except (chess.engine.EngineTerminatedError, chess.engine.AnalysisComplete) as e:
+            print(f"Engine info: {e}")
         except Exception as e:
-            print(f"Engine thread error: {e}")
+            # This captures the 'Unexpected output' error gracefully
+            print(f"UCI Protocol caught engine noise: {e}")
         finally:
             self.current_analysis = None
             self.is_engine_thinking = False
@@ -491,8 +504,8 @@ class BoardController:
             elif p in ('Q', 'q'):
                 self.absent_pices_num[p] = 1 - self.absent_pices_num[p]
 
-    def play_sound(self, move):
-        if self.board.is_capture(move):
+    def play_sound(self, was_capture):
+        if was_capture:
             self.capture_sound.play()
         else:
             self.move_sound.play()
@@ -529,9 +542,10 @@ class BoardController:
                         # Finalize displays
                         self.source_square_display = move.from_square
                         self.target_square_display = move.to_square
+                        is_capture = self.board.is_capture(move)
                         self.board.push(move)
                         self.update_game_status()
-                        self.play_sound(move)
+                        self.play_sound(is_capture)
                         self.get_absent_pieces()
                         
                         # IMPORTANT: Clear BOTH animations
