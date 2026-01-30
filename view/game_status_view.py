@@ -9,7 +9,7 @@ class GameStatusView:
         self.lose_on_time_white = self.font.render("White lost on time", True, BLACK)
         self.lose_on_time_black = self.font.render("Black lost on time", True, BLACK)
         self.draw_insufficient_material = self.font.render("Draw by Incufficient material", True, BLACK)
-        self.draw_stalemate= self.font.render("Draw by Incufficient material", True, BLACK)
+        self.draw_stalemate = self.font.render("Draw by Stalemate", True, BLACK)
         self.checkmate_white = self.font.render("White won. Checkmate", True, BLACK)
         self.checkmate_black = self.font.render("Black won. Checkmate", True, BLACK)
         self.message = None

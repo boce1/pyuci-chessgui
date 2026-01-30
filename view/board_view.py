@@ -101,34 +101,48 @@ class BoardView:
                 pg.draw.rect(win, color, (BOARD_X + col * SQUARE_SIZE, BOARD_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE))
 
     def draw_pieces_with_animation(self, win):
-        """Combined method to handle static pieces and the animating piece."""
-        # Identify which square is currently 'empty' because its piece is moving
-        moving_from_square = None
-        if self.controller.active_animation and self.controller.pending_move:
-            moving_from_square = self.controller.pending_move.from_square
+        """Combined method to handle static pieces, the primary piece, and secondary pieces (like Rooks in castling)."""
+        hidden_squares = []
+        
+        # 1. Identify which squares are 'empty' because pieces are moving
+        if self.controller.pending_move:
+            # Hide the primary piece (usually the King in castling)
+            hidden_squares.append(self.controller.pending_move.from_square)
+            
+            # If it's a castle, we also need to hide the Rook's starting square
+            if self.controller.board.is_castling(self.controller.pending_move):
+                # Map King's destination to the Rook's original position
+                rook_start_sq = self.controller.castle_map.get(self.controller.pending_move.to_square)
+                if rook_start_sq is not None:
+                    hidden_squares.append(rook_start_sq)
 
-        # Draw all static pieces
+        # 2. Draw all static pieces
         for square, piece in self.controller.board.piece_map().items():
-            if square == moving_from_square:
-                continue  # Don't draw the piece that is currently in motion
+            if square in hidden_squares:
+                continue  # Don't draw pieces currently in motion
             
             piece_image = self.pieces_images.get(piece.symbol())
             if piece_image:
                 x, y = self.controller.get_square_coords(square)
-                # Adjust to center the piece image in the square
                 offset = (SQUARE_SIZE - PIECE_SIZE) // 2
                 win.blit(piece_image, (x + offset, y + offset))
 
-        # Draw the animating piece on top
+        # 3. Draw the primary animating piece (King)
         if self.controller.active_animation:
-            anim = self.controller.active_animation
-            anim_img = self.pieces_images.get(anim.piece_symbol)
-            if anim_img:
-                # The MoveAnimation class already calculates current_pos in pixels
-                # We just add the centering offset
-                offset = (SQUARE_SIZE - PIECE_SIZE) // 2
-                win.blit(anim_img, (anim.current_pos.x + offset, anim.current_pos.y + offset))
-                
+            self._draw_anim_helper(win, self.controller.active_animation)
+
+        # 4. Draw the secondary animating piece (Rook)
+        if self.controller.secondary_animation:
+            self._draw_anim_helper(win, self.controller.secondary_animation)
+
+
+    def _draw_anim_helper(self, win, anim):
+        """Helper to render a single animation object."""
+        anim_img = self.pieces_images.get(anim.piece_symbol)
+        if anim_img:
+            offset = (SQUARE_SIZE - PIECE_SIZE) // 2
+            win.blit(anim_img, (anim.current_pos.x + offset, anim.current_pos.y + offset))
+
 
     def draw_legal_moves_for_source_square(self, win):
         for move in self.controller.legal_moves_for_source_square:

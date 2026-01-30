@@ -58,7 +58,7 @@ The source code of the engine: https://github.com/boce1/cincinnatus.git
 
 ### Refrences
 
-- The sound effects are from `Lichess` - https://github.com/lichess-org
+- The sound effects are from `Lichess` - https://github.com/lichess-org/lila/tree/master/public/sound
 - The `NNUE probe` used to integrate `Stockfish NNUE` - https://github.com/dshawul/nnue-probe
 - PNGs for pieces - https://greenchess.net/info.php?item=downloads
 

@@ -17,6 +17,10 @@ class BoardController:
         # fen = pawn_promotion_fen
         # fen = pawn_promotion_fen_black_turn
         # fen = promotion_fen
+        # fen = incufficient_material
+        # fen = stalemate
+        # fen = white_rook_promotion
+        # fen = black_rook_promotion
         self.board = chess.Board(fen)
         self.engine = None
         self.load_engine()
@@ -57,6 +61,7 @@ class BoardController:
         sounds_dir = os.path.normpath(sounds_dir)
         self.move_sound = pg.mixer.Sound(os.path.join(sounds_dir, "move.mp3"))
         self.capture_sound = pg.mixer.Sound(os.path.join(sounds_dir, "capture.mp3"))
+        self.generic_notification_sound = pg.mixer.Sound(os.path.join(sounds_dir, "generic_notification.mp3"))
 
         self.search_info = SearchInfo()
 
@@ -65,7 +70,15 @@ class BoardController:
 
         # for pices moving animation
         self.active_animation = None
+        self.secondary_animation = None  # Specifically for the Rook
         self.pending_move = None
+
+        self.castle_map = {
+            chess.G1: (chess.H1, chess.F1), # White Kingside
+            chess.C1: (chess.A1, chess.D1), # White Queenside
+            chess.G8: (chess.H8, chess.F8), # Black Kingside
+            chess.C8: (chess.A8, chess.D8)  # Black Queenside
+        }
 
     def load_engine(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -169,6 +182,20 @@ class BoardController:
                 self.active_animation = MoveAnimation(piece.symbol(), start_px, end_px)
                 self.pending_move = move_to_make
 
+                # 2. DETECT CASTLING: Setup Secondary Animation (The Rook)
+                if self.board.is_castling(move_to_make):
+                    # Determine Rook squares based on King's destination
+                    # Mapping: King Dest -> (Rook From, Rook To)
+                    
+                    
+                    r_from, r_to = self.castle_map[move_to_make.to_square]
+                    r_start_px = self.get_square_coords(r_from)
+                    r_end_px = self.get_square_coords(r_to)
+                    r_piece = self.board.piece_at(r_from)
+                    
+                    if r_piece:
+                        self.secondary_animation = MoveAnimation(r_piece.symbol(), r_start_px, r_end_px)
+
                 self.legal_moves_for_source_square = []
                 if self.is_promoting:
                     # Do not clear source_square yet
@@ -219,10 +246,10 @@ class BoardController:
 
             if final_move in self.board.legal_moves:
                 with self.board_lock:
-                    self.play_sound(final_move)
                     self.board.push(final_move)
-                    self.get_absent_pieces()
                     self.update_game_status()
+                    self.play_sound(final_move)
+                    self.get_absent_pieces()
 
                     self.source_square_display = final_move.from_square
                     self.target_square_display = final_move.to_square
@@ -261,7 +288,7 @@ class BoardController:
     def run_engine(self, board_copy):
         """ This runs in the background thread """
         try:
-            if not self.engine or self.is_force_quit_engine or self.game_status == GAME_PAUSED:
+            if not self.engine or self.is_force_quit_engine or self.game_status != PLAYING:
                 return
 
             self.is_engine_thinking = True
@@ -269,7 +296,7 @@ class BoardController:
             with self.engine.analysis(board_copy, self.time_limit) as analysis:
                 self.current_analysis = analysis
                 for info in analysis:
-                    if self.is_force_quit_engine or self.game_status == GAME_PAUSED:
+                    if self.is_force_quit_engine or self.game_status != PLAYING:
                         analysis.stop()
                         break
                     self.get_info_analysis(info)
@@ -325,6 +352,13 @@ class BoardController:
         self.white_clock = max(0, self.white_clock)
         self.black_clock = max(0, self.black_clock)
 
+        if self.white_clock == 0:
+            self.game_status = TIME_PASSED_WHITE
+            self.generic_notification_sound.play()
+        if self.black_clock == 0:
+            self.game_status = TIME_PASSED_BLACK
+            self.generic_notification_sound.play()
+
     def update_game_status(self):
         if self.board.is_checkmate():
             if self.board.turn == chess.WHITE:
@@ -361,6 +395,7 @@ class BoardController:
             
             self.active_animation = None    # Clear the "ghost" pawn animation
             self.pending_move = None        # Clear the "ghost" move
+            self.secondary_animation = None
             self.is_promoting = False       # Stop the promotion state
 
             self.game_status = GAME_PAUSED
@@ -391,6 +426,7 @@ class BoardController:
             # self.game_status = GAME_PAUSED  # Add this to stop the clock
             self.active_animation = None    # Clear the "ghost" pawn animation
             self.pending_move = None        # Clear the "ghost" move
+            self.secondary_animation = None
             self.is_promoting = False       # Stop the promotion state
             self.get_absent_pieces()
 
@@ -458,18 +494,32 @@ class BoardController:
     def play_sound(self, move):
         if self.board.is_capture(move):
             self.capture_sound.play()
-            return
         else:
             self.move_sound.play()
-            return
+        
+        if self.game_status in (CHECKMATE_BY_WHITE, CHECKMATE_BY_BLACK, STALEMATE, 
+                                INSUFFICIENT_MATERIAL, TIME_PASSED_WHITE, TIME_PASSED_BLACK):
+            self.generic_notification_sound.play()
+
+    def play_sound_time_passed(self):
+        if self.game_status in (TIME_PASSED_WHITE, TIME_PASSED_BLACK):
+            self.generic_notification_sound.play()
 
     def procces_animation_and_push_move(self, dt):
         if self.active_animation:
             self.active_animation.update(dt)
+
+            # Update Rook (Secondary) if it exists
+            if self.secondary_animation:
+                self.secondary_animation.update(dt)
+
             if self.active_animation.is_done:
                 # Determine if we should push now or wait for Human UI
                 # 1. If it's NOT a promotion, push immediately.
                 # 2. If it IS an engine move (turn != human side), push immediately.
+                if self.secondary_animation and not self.secondary_animation.is_done:
+                    return
+
                 is_human_turn = (self.white_on_bottom and self.board.turn == chess.WHITE) or \
                                 (not self.white_on_bottom and self.board.turn == chess.BLACK)
                 should_push = not self.is_promoting or not is_human_turn
@@ -479,11 +529,14 @@ class BoardController:
                         # Finalize displays
                         self.source_square_display = move.from_square
                         self.target_square_display = move.to_square
-                        self.play_sound(move)
                         self.board.push(move)
-                        self.get_absent_pieces()
                         self.update_game_status()
+                        self.play_sound(move)
+                        self.get_absent_pieces()
+                        
+                        # IMPORTANT: Clear BOTH animations
                         self.active_animation = None
+                        self.secondary_animation = None
                         self.pending_move = None
 
     def shut_down_engine(self):
