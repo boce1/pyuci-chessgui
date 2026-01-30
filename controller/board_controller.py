@@ -14,7 +14,7 @@ class BoardController:
 
         fen = chess.STARTING_FEN
         # fen = check_fen  # For testing purposes
-        fen = pawn_promotion_fen
+        # fen = pawn_promotion_fen
         # fen = pawn_promotion_fen_black_turn
         # fen = promotion_fen
         self.board = chess.Board(fen)
@@ -44,7 +44,7 @@ class BoardController:
         self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
         self.last_selected_time = (self.white_clock, self.black_clock)
 
-        self.game_status = PLAYING
+        self.game_status = GAME_PAUSED
 
         self.absent_pices_num = {
             'P': 0, 'N': 0, 'B': 0, 'R': 0, 'Q': 0, 'K': 0,
