@@ -30,7 +30,6 @@ class BoardController:
         self.current_analysis = None
         self.is_force_quit_engine = False
 
-        self.pending_move_to_square = None
         self.is_promoting = False
         self.promotion_piece = None
 
@@ -172,8 +171,6 @@ class BoardController:
 
                 self.legal_moves_for_source_square = []
                 if self.is_promoting:
-                    self.pending_move_to_square = move_to_make.to_square
-                    self.pending_move = None
                     # Do not clear source_square yet
                     return 
 
@@ -212,9 +209,14 @@ class BoardController:
         elif piece_index == 3:
             self.promotion_piece = chess.BISHOP
 
-        if self.promotion_piece != None and self.pending_move_to_square:
-            final_move = chess.Move(self.source_square, self.pending_move_to_square, promotion=self.promotion_piece)
-            
+        if self.promotion_piece != None and self.pending_move:
+        # Construct the REAL move with the promotion piece
+            final_move = chess.Move(
+                self.pending_move.from_square, 
+                self.pending_move.to_square, 
+                promotion=self.promotion_piece
+            )
+
             if final_move in self.board.legal_moves:
                 with self.board_lock:
                     self.play_sound(final_move)
@@ -225,12 +227,11 @@ class BoardController:
                     self.source_square_display = final_move.from_square
                     self.target_square_display = final_move.to_square
 
+                # Cleanup
                 self.active_animation = None
-                self.pending_move = None
+                self.pending_move = None # Now we can clear it
                 self.promotion_piece = None
-                self.pending_move_to_square = None
                 self.source_square = None
-                self.legal_moves_for_source_square = []
                 self.is_promoting = False
         
         
@@ -351,13 +352,16 @@ class BoardController:
             self.current_analysis = None
             self.is_force_quit_engine = False
 
-            self.pending_move_to_square = None
+            self.pending_move = None
             self.is_promoting = False
             self.promotion_piece = None
 
             self.source_square_display = None
             self.target_square_display = None
             
+            self.active_animation = None    # Clear the "ghost" pawn animation
+            self.pending_move = None        # Clear the "ghost" move
+            self.is_promoting = False       # Stop the promotion state
 
             self.game_status = GAME_PAUSED
             self.get_absent_pieces()
@@ -375,7 +379,7 @@ class BoardController:
             self.current_analysis = None
             self.is_force_quit_engine = False
 
-            self.pending_move_to_square = None
+            self.pending_move = None
             self.is_promoting = False
             self.promotion_piece = None
 
@@ -384,7 +388,10 @@ class BoardController:
             
             self.search_info = SearchInfo()
 
-            #self.game_status = GAME_PAUSED
+            # self.game_status = GAME_PAUSED  # Add this to stop the clock
+            self.active_animation = None    # Clear the "ghost" pawn animation
+            self.pending_move = None        # Clear the "ghost" move
+            self.is_promoting = False       # Stop the promotion state
             self.get_absent_pieces()
 
             self.board.turn = chess.WHITE
