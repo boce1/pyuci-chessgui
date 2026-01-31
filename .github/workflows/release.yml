@@ -76,7 +76,13 @@ jobs:
         shell: bash
         run: |
           cd build_out/main.dist
-          zip -r ../../${{ matrix.zip_name }} . *
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            # Use 7z (available on Windows runners) to create a zip
+            7z a -r ../../${{ matrix.zip_name }} *
+          else
+            # Use standard zip on Linux
+            zip -r ../../${{ matrix.zip_name }} .
+          fi
 
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
