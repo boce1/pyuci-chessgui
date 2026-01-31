@@ -1,7 +1,5 @@
 from config import *
 import pygame as pg
-import os
-import chess
 from .board_view import BoardView
 
 class MainWindow:
@@ -11,6 +9,14 @@ class MainWindow:
         self.height = SCREEN_HEIGHT
         pg.display.set_caption("Cincinnatus GUI")
         self.window = pg.display.set_mode((self.width, self.height))
+
+        # draw loading screen at initialization
+        self.window.fill(BACKGROUND_COLOR)
+        font = pg.font.SysFont("Consolas", 30)
+        loading_text = font.render("Loading the engine...", True, BLACK)
+        self.window.blit(loading_text, (self.width // 2 - loading_text.get_width() // 2, self.height // 2 - loading_text.get_height() // 2))
+        pg.display.update() # Force the "Loading" text onto the screen
+
         self.board_view = BoardView()
 
     def draw(self):
