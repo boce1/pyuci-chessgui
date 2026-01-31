@@ -55,7 +55,7 @@ class MainWindow:
             
             # Use flip to swap buffers and force Windows to map the window
             pg.display.flip()
-            
+            pg.event.pump()
             # Keep it at 60 FPS to stay smooth without hogging the CPU
             clock.tick(FPS)
 
