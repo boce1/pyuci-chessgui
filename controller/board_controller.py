@@ -265,43 +265,55 @@ class BoardController:
         
 
     def engine_make_move(self):
-        is_engine_turn = (self.white_on_bottom and self.board.turn == chess.BLACK) or \
-                         (not self.white_on_bottom and self.board.turn == chess.WHITE)
+        if self.engine is None:
+            return
+        
+        with self.board_lock:
+            is_engine_turn = (self.white_on_bottom and self.board.turn == chess.BLACK) or \
+                            (not self.white_on_bottom and self.board.turn == chess.WHITE)
 
-        if is_engine_turn and not self.is_engine_thinking and self.game_status == PLAYING:
-            if self.active_animation is not None or self.pending_move is not None:
-                return
-
-            if self.engine is None:
+            if not is_engine_turn:
                 return
             
-            with self.board_lock:
-                self.current_search_id = time.time() # Create a unique ID for this search
-                search_id = self.current_search_id
-                board_copy = self.board.copy()
-
+            if self.is_engine_thinking or self.game_status != PLAYING:
+                return
+            
+            if self.active_animation is not None or self.pending_move is not None:
+                return            
+            
+        with self.board_lock:
+            self.current_search_id = time.time() # Create a unique ID for this search
+            search_id = self.current_search_id
+            board_copy = self.board.copy()
             self.is_engine_thinking = True
-            # Pass the ID into the thread
-            thread = threading.Thread(target=self.run_engine, args=(board_copy, search_id))
-            thread.daemon = True
-            thread.start()
+            
+        # Pass the ID into the thread
+        thread = threading.Thread(target=self.run_engine, args=(board_copy, search_id))
+        thread.daemon = True
+        thread.start()
 
     def run_engine(self, board_copy, search_id):
         """ Runs in background thread with a thread-safe board snapshot """
         try:
-            if not self.engine or self.is_force_quit_engine or self.game_status != PLAYING:
+            if not self.engine:
                 return
-    
+            
+            with self.board_lock:
+                if self.is_force_quit_engine or self.game_status != PLAYING:
+                    return
+
             # Start analysis on the copy
             with self.engine.analysis(board_copy, self.time_limit) as analysis:
-                self.current_analysis = analysis
+                with self.board_lock:
+                    self.current_analysis = analysis
                 
                 for info in analysis:
-                    if self.is_force_quit_engine or self.game_status != PLAYING:
-                        analysis.stop()
-                        break
-                    self.get_info_analysis(info)
-    
+                    with self.board_lock:
+                        if self.is_force_quit_engine or self.game_status != PLAYING \
+                            or self.current_search_id != search_id:
+                            analysis.stop()
+                            break
+                        self.search_info.update(info)    
                 
                 try:
                     result = analysis.wait()
@@ -309,10 +321,14 @@ class BoardController:
                     print(f"Engine returned an invalid move or protocol error: {e}")
                     return
     
-                if result.move and not self.is_force_quit_engine and self.game_status == PLAYING:
+                if result.move:
                     with self.board_lock:
-                        if search_id != self.current_search_id:
-                            print("Discarding move from a previous/cancelled game.")
+                        if self.is_force_quit_engine or self.game_status != PLAYING:
+                            print("The game is terminated.")
+                            return
+
+                        if self.current_search_id != search_id:
+                            print("Old analysis terminated.")
                             return
 
                         # Verify move is still legal on the MAIN board
@@ -340,21 +356,19 @@ class BoardController:
         except Exception as e:
             print(f"General Engine Thread Error: {e}")
         finally:
-            self.current_analysis = None
-            self.is_engine_thinking = False
-
-    def get_info_analysis(self, info):
-        with self.board_lock:
-            self.search_info.update(info)
-
+            with self.board_lock:
+                if self.current_search_id == search_id:
+                    self.current_analysis = None
+                    self.is_engine_thinking = False
 
     def update_time(self):
         current_time = time.time()
         delta_time = current_time - self.last_time
         self.last_time = current_time
 
-        if self.game_status != PLAYING:
-            return
+        with self.board_lock:
+            if self.game_status != PLAYING:
+                return
         
         if self.board.turn == chess.WHITE:
             self.white_clock = max(0, self.white_clock - delta_time)
@@ -406,70 +420,67 @@ class BoardController:
 
                 self.get_absent_pieces()
 
-                self.board.turn = chess.WHITE
-
-    def reset_game(self):
+    def play_game(self):
         with self.board_lock:
-            if not self.is_engine_thinking and self.game_status != PLAYING and self.current_analysis == None:
-                self.source_square = None
-                self.legal_moves_for_source_square = []
+            if self.game_status != PLAYING:
+                self.board.set_fen(chess.STARTING_FEN)
+                self.white_clock, self.black_clock = self.last_selected_time
+                self.last_time = time.time()
+                self.game_status = PLAYING
+            
+                if not self.is_engine_thinking and self.current_analysis == None:
 
-                self.is_engine_thinking = False
-                self.current_analysis = None
-                self.is_force_quit_engine = False
+                    self.source_square = None
+                    self.legal_moves_for_source_square = []
 
-                self.is_promoting = False
-                self.promotion_piece = None
+                    self.is_engine_thinking = False
+                    self.current_analysis = None
+                    self.is_force_quit_engine = False
 
-                self.source_square_display = None
-                self.target_square_display = None
+                    self.is_promoting = False
+                    self.promotion_piece = None
 
-                self.search_info = SearchInfo()
+                    self.source_square_display = None
+                    self.target_square_display = None
 
-                self.active_animation = None    # Clear the "ghost" pawn animation
-                self.pending_move = None        # Clear the "ghost" move
-                self.secondary_animation = None
-                self.get_absent_pieces()
+                    self.search_info = SearchInfo()
 
-                self.board.turn = chess.WHITE
+                    self.active_animation = None    # Clear the "ghost" pawn animation
+                    self.pending_move = None        # Clear the "ghost" move
+                    self.secondary_animation = None
+                    self.get_absent_pieces()
 
-    def play_button_action(self):
-        if self.game_status != PLAYING:
-            self.board.set_fen(chess.STARTING_FEN)
-            self.reset_game()
-    
-            self.white_clock, self.black_clock = self.last_selected_time
-            self.last_time = time.time()
-    
-            self.game_status = PLAYING
-
-    def set_TIME_1_MUNUTES(self):
-        if self.game_status != PLAYING:
-            self.black_clock = TIME_1_MUNUTES
-            self.white_clock = TIME_1_MUNUTES
-            self.last_selected_time = (self.white_clock, self.black_clock)
-            self.moves_to_go = MOVES_TO_GO_BLITZ
-            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
+    def set_time_1_minute(self):
+        with self.board_lock:
+            if self.game_status != PLAYING:
+                self.black_clock = TIME_1_MUNUTES
+                self.white_clock = TIME_1_MUNUTES
+                self.last_selected_time = (self.white_clock, self.black_clock)
+                self.moves_to_go = MOVES_TO_GO_BLITZ
+                self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
 
     def set_time_5_minutes(self):
-        if self.game_status != PLAYING:
-            self.black_clock = TIME_5_MINUTES
-            self.white_clock = TIME_5_MINUTES
-            self.last_selected_time = (self.white_clock, self.black_clock)
-            self.moves_to_go = MOVES_TO_GO_DEFAULT
-            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
+        with self.board_lock:
+            if self.game_status != PLAYING:
+                self.black_clock = TIME_5_MINUTES
+                self.white_clock = TIME_5_MINUTES
+                self.last_selected_time = (self.white_clock, self.black_clock)
+                self.moves_to_go = MOVES_TO_GO_DEFAULT
+                self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
         
     def set_time_10_minutes(self):
-        if self.game_status != PLAYING:
-            self.black_clock = TIME_10_MINUTES
-            self.white_clock = TIME_10_MINUTES
-            self.last_selected_time = (self.white_clock, self.black_clock)
-            self.moves_to_go = MOVES_TO_GO_DEFAULT
-            self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
+        with self.board_lock:
+            if self.game_status != PLAYING:
+                self.black_clock = TIME_10_MINUTES
+                self.white_clock = TIME_10_MINUTES
+                self.last_selected_time = (self.white_clock, self.black_clock)
+                self.moves_to_go = MOVES_TO_GO_DEFAULT
+                self.time_limit = chess.engine.Limit(white_clock=self.white_clock, black_clock=self.black_clock, remaining_moves=self.moves_to_go)
 
     def change_board_orientation(self):
-        if self.game_status != PLAYING:
-            self.white_on_bottom = not self.white_on_bottom
+        with self.board_lock:
+            if self.game_status != PLAYING:
+                self.white_on_bottom = not self.white_on_bottom
 
     def get_absent_pieces(self):
         self.absent_pices_num = {
@@ -537,7 +548,8 @@ class BoardController:
                         self.pending_move = None
 
     def shut_down_engine(self):
-        self.is_force_quit_engine = True
+        with self.board_lock:
+            self.is_force_quit_engine = True
 
         # 1. Stop the current analysis first
         if self.current_analysis:
@@ -548,7 +560,10 @@ class BoardController:
 
         # 2. Wait for the background thread to finish its loop (max 15 seconds)
         start_wait = time.time()
-        while self.is_engine_thinking and (time.time() - start_wait < 15.0):
+        while time.time() - start_wait < 15.0:
+            with self.board_lock:
+                if not self.is_engine_thinking:
+                    break
             time.sleep(0.1)
 
         # 3. Now safely quit the engine process

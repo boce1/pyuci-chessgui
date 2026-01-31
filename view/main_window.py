@@ -34,7 +34,8 @@ class MainWindow:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     running = False
-                    ctrl.is_force_quit_engine = True
+                    with ctrl.board_lock:
+                        ctrl.is_force_quit_engine = True
     
                 # Handle UI Buttons
                 self.board_view.change_side_button.update_color_when_pressed(event, mouse_pos)
@@ -62,7 +63,6 @@ class MainWindow:
             self.draw()
             ctrl.update_time()
             ctrl.engine_make_move()
-            ctrl.reset_game()
     
         pg.quit()
         ctrl.shut_down_engine()

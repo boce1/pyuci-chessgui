@@ -31,9 +31,9 @@ class BoardView:
         self.search_table = SearchInfoView()
         
         # Buttons
-        self.play_button = Button(PLAY_BUTTON_X, PLAY_BUTTON_Y, PLAY_BUTTON_WIDTH, PLAY_BUTTON_HEIGHT, self.controller.play_button_action, "Start new game", BUTTON_START)
+        self.play_button = Button(PLAY_BUTTON_X, PLAY_BUTTON_Y, PLAY_BUTTON_WIDTH, PLAY_BUTTON_HEIGHT, self.controller.play_game, "Start new game", BUTTON_START)
         self.pause_button = Button(PAUSE_BUTTON_X, PAUSE_BUTTON_Y, PAUSE_BUTTON_WIDTH, PAUSE_BUTTON_HEIGHT, self.controller.stop_game, "Stop the game", BUTTON_STOP)
-        self.one_minutes_button = Button(TIME_BUTTON_1_X, TIME_BUTTON_1_Y, TIME_BUTTON_1_WIDTH, TIME_BUTTON_1_HEIGHT, self.controller.set_TIME_1_MUNUTES, "1 minute")
+        self.one_minutes_button = Button(TIME_BUTTON_1_X, TIME_BUTTON_1_Y, TIME_BUTTON_1_WIDTH, TIME_BUTTON_1_HEIGHT, self.controller.set_time_1_minute, "1 minute")
         self.five_minutes_button = Button(TIME_BUTTON_2_X, TIME_BUTTON_2_Y, TIME_BUTTON_2_WIDTH, TIME_BUTTON_2_HEIGHT, self.controller.set_time_5_minutes, "5 minutes")
         self.ten_minutes_button = Button(TIME_BUTTON_3_X, TIME_BUTTON_3_Y, TIME_BUTTON_3_WIDTH, TIME_BUTTON_3_HEIGHT, self.controller.set_time_10_minutes, "10 minutes")
         self.change_side_button = Button(CHANGE_SIDE_BUTTON_X, CHANGE_SIDE_BUTTON_Y, CHANGE_SIDE_BUTTON_WIDTH, CHANGE_SIDE_BUTTON_HEIGHT, self.controller.change_board_orientation, "Change side")
@@ -51,7 +51,7 @@ class BoardView:
         
         for symbol, filename in mapping.items():
             path = os.path.join(pics_dir, filename)
-            self.pieces_images[symbol] = pg.transform.scale(pg.image.load(path), (PIECE_SIZE, PIECE_SIZE)).convert_alpha()
+            self.pieces_images[symbol] = pg.transform.scale(pg.image.load(path), (PIECE_SIZE, PIECE_SIZE)).convert_alpha() # type: ignore
 
     def draw(self, win):
         # 1. Background and Board Structure
