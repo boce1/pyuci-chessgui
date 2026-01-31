@@ -62,7 +62,8 @@ The source code of the engine: https://github.com/boce1/cincinnatus.git
 - The `NNUE probe` used to integrate `Stockfish NNUE` - https://github.com/dshawul/nnue-probe
 - PNGs for pieces - https://greenchess.net/info.php?item=downloads
 
-### TO DO:
-- add Licence
-- add animatio when moving a picese
-- add information about cp of the board and information about principal variation moves
+# Executables
+
+The engine and the GUI are Windows and Linux compatable. 
+
+You can find the latest compiled binaries (EXE) and the source code in the [Releases](https://github.com/boce1/pyuci-chessgui/releases/tag/v1.0) section.
