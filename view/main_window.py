@@ -1,5 +1,6 @@
 from config import *
 import pygame as pg
+import threading
 import os
 from .board_view import BoardView
 
@@ -9,30 +10,48 @@ class MainWindow:
         self.width = SCREEN_WIDTH
         self.height = SCREEN_HEIGHT
         pg.display.set_caption("Cincinnatus GUI")
-
-        # Open the window NORMALLY (No Hidden/Shown switching)
-        self.window = pg.display.set_mode((self.width, self.height))
-
-        # Draw the Splash Screen
-        self.window.fill(BACKGROUND_COLOR)
-        font = pg.font.SysFont("Consolas", 30)
-        loading_text = font.render("Loading the engine...", True, BLACK)
-        text_rect = loading_text.get_rect(center=(self.width // 2, self.height // 2))
-        self.window.blit(loading_text, text_rect)
         
-        # THE CRITICAL STEP: The "Visual Lock"
-        # We must flip the display AND pump events multiple times.
-        # This forces the OS to "bake" the current pixels into the window 
-        # before the CPU gets busy with BoardView.
-        for _ in range(20):
-            pg.event.pump()
-            self.window.blit(loading_text, text_rect) # Keep blitting to be safe
-            pg.display.update() 
-            pg.time.delay(20) # Total delay of ~400ms
+        # Create window immediately
+        self.window = pg.display.set_mode((self.width, self.height))
+        
+        # Setup loading state
+        self.board_view = None
+        self.loading_finished = False
+        self.font = pg.font.SysFont("Consolas", 30)
 
-        # NOW start the heavy loading
-        # The window is now "locked" with the loading text on it.
+        # Start the loading thread
+        # daemon=True ensures the thread dies if you close the window
+        loader = threading.Thread(target=self._load_task, daemon=True)
+        loader.start()
+
+        # The "Stay Alive" Loop
+        # This keeps the splash screen drawing while the thread works
+        self._run_splash()
+
+    def _load_task(self):
+        """This runs in the background. No pg.display calls allowed here!"""
         self.board_view = BoardView()
+        self.loading_finished = True
+
+    def _run_splash(self):
+        """The Main Thread loop that prevents the 'Black Screen'."""
+        clock = pg.time.Clock()
+        while not self.loading_finished:
+            # Handle events so Windows knows we are active
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    os._exit(0) # Force kill everything
+
+            # Draw the loading screen
+            self.window.fill(BACKGROUND_COLOR)
+            font = pg.font.SysFont("Consolas", 30)
+            loading_text = font.render("Loading the engine...", True, BLACK)
+            text_rect = loading_text.get_rect(center=(self.width // 2, self.height // 2))
+            self.window.blit(loading_text, text_rect)
+            
+            pg.display.flip()
+            clock.tick(60) # Keep the UI smooth
 
     def draw(self):
         self.window.fill(BACKGROUND_COLOR)
@@ -48,10 +67,10 @@ class MainWindow:
             dt = clock.tick(FPS) / 1000.0 
             mouse_pos = pg.mouse.get_pos()
     
-            # 1. PROCESS ANIMATIONS
+            # PROCESS ANIMATIONS
             ctrl.procces_animation_and_push_move(dt)
     
-            # 2. PROCESS EVENTS (ONE LOOP ONLY)
+            # PROCESS EVENTS (ONE LOOP ONLY)
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     running = False
@@ -80,7 +99,7 @@ class MainWindow:
                 # They are separate because promoting piece has its logic and it pushes the move
                 # The animation 
 
-            # 3. RENDER & UPDATES
+            # RENDER & UPDATES
             self.draw()
             ctrl.update_time()
             ctrl.engine_make_move()
