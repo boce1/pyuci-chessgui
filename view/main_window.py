@@ -9,7 +9,7 @@ class MainWindow:
         self.height = SCREEN_HEIGHT
         pg.display.set_caption("Cincinnatus GUI")
         self.window = pg.display.set_mode((self.width, self.height))
-        pg.event.pump() # forcing windows to recognize the window and pause the loading file temporarelly
+        pg.event.get() # pg.event.pump() # forcing windows to recognize the window and pause the loading file temporarelly
 
         # draw loading screen at initialization
         self.window.fill(BACKGROUND_COLOR)
