@@ -16,7 +16,7 @@ class MainWindow:
         
         # Setup loading state
         self.board_view = None
-        self.loading_finished = False
+        self.loading_finished = threading.Event()
         self.font = pg.font.SysFont("Consolas", 30)
 
         # Start the loading thread
@@ -29,29 +29,35 @@ class MainWindow:
         self._run_splash()
 
     def _load_task(self):
-        """This runs in the background. No pg.display calls allowed here!"""
+        """This runs in the background. No pg.display calls allowed here"""
         self.board_view = BoardView()
-        self.loading_finished = True
+        self.loading_finished.set()
 
     def _run_splash(self):
         """The Main Thread loop that prevents the 'Black Screen'."""
         clock = pg.time.Clock()
-        while not self.loading_finished:
-            # Handle events so Windows knows we are active
+        while not self.loading_finished.is_set():
+            # Handle events so Windows knows the app is responsive
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
-                    os._exit(0) # Force kill everything
+                    return
 
-            # Draw the loading screen
+            # Clear the screen
             self.window.fill(BACKGROUND_COLOR)
-            font = pg.font.SysFont("Consolas", 30)
-            loading_text = font.render("Loading the engine...", True, BLACK)
-            text_rect = loading_text.get_rect(center=(self.width // 2, self.height // 2))
-            self.window.blit(loading_text, text_rect)
             
+            # Render and center the text
+            loading_text = self.font.render("Loading the engine...", True, BLACK)
+            
+            # Draw to the window
+            self.window.blit(loading_text, (self.width // 2 - loading_text.get_width() // 2,
+                                            self.height // 2 - loading_text.get_height() // 2))
+            
+            # Use flip to swap buffers and force Windows to map the window
             pg.display.flip()
-            clock.tick(60) # Keep the UI smooth
+            
+            # Keep it at 60 FPS to stay smooth without hogging the CPU
+            clock.tick(FPS)
 
     def draw(self):
         self.window.fill(BACKGROUND_COLOR)
@@ -99,7 +105,7 @@ class MainWindow:
                 # They are separate because promoting piece has its logic and it pushes the move
                 # The animation 
 
-            # RENDER & UPDATES
+            #  RENDER & UPDATES
             self.draw()
             ctrl.update_time()
             ctrl.engine_make_move()
