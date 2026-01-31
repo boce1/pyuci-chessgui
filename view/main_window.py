@@ -1,5 +1,6 @@
 from config import *
 import pygame as pg
+import os
 from .board_view import BoardView
 
 class MainWindow:
@@ -8,15 +9,34 @@ class MainWindow:
         self.width = SCREEN_WIDTH
         self.height = SCREEN_HEIGHT
         pg.display.set_caption("Cincinnatus GUI")
-        self.window = pg.display.set_mode((self.width, self.height))
-        pg.event.get() # pg.event.pump() # forcing windows to recognize the window and pause the loading file temporarelly
 
-        # draw loading screen at initialization
+        # Check OS: 'nt' is Windows, 'posix' is Linux/Mac
+        is_windows = os.name == 'nt'
+
+        # Start Hidden on Windows to avoid black flicker
+        if is_windows:
+            self.window = pg.display.set_mode((self.width, self.height), pg.HIDDEN)
+        else:
+            self.window = pg.display.set_mode((self.width, self.height))
+
+        # Draw Splash
         self.window.fill(BACKGROUND_COLOR)
         font = pg.font.SysFont("Consolas", 30)
         loading_text = font.render("Loading the engine...", True, BLACK)
-        self.window.blit(loading_text, (self.width // 2 - loading_text.get_width() // 2, self.height // 2 - loading_text.get_height() // 2))
-        pg.display.update() # Force the "Loading" text onto the screen
+        self.window.blit(loading_text, (self.width // 2 - loading_text.get_width() // 2, 
+                                        self.height // 2 - loading_text.get_height() // 2))
+        
+        # Reveal for Windows
+        if is_windows:
+            self.window = pg.display.set_mode((self.width, self.height), pg.SHOWN)
+        
+        pg.display.update()
+
+        # The Handshake Loop (Ensures Linux/Windows both render the pixels)
+        for _ in range(15):
+            pg.event.pump()
+            pg.display.update()
+            pg.time.delay(10)
 
         self.board_view = BoardView()
 

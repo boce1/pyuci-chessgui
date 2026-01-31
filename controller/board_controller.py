@@ -142,7 +142,7 @@ class BoardController:
         return x, y
 
     def handle_click(self, event, mouse_pos):
-        # 1. Thread-Safe State Check
+        # Thread-Safe State Check
         # We lock here to check if the game is active and if it's the human's turn.
         with self.board_lock:
             if self.game_status != PLAYING:
@@ -163,11 +163,11 @@ class BoardController:
             piece_at_square = self.board.piece_at(square)
             current_turn = self.board.turn
 
-        # 2. UI Event Check (Lock not needed for local event processing)
+        # UI Event Check (Lock not needed for local event processing)
         if not self.is_left_mouse_button_down(event):
             return
 
-        # 3. State Machine Logic
+        # State Machine Logic
         if self.source_square is None:
             # Selecting a piece
             if piece_at_square and piece_at_square.color == current_turn:
@@ -189,7 +189,7 @@ class BoardController:
                 # Check for promotion (UI logic)
                 self.is_promotion(move_to_make)
 
-                # 4. Critical Section: Updating shared animation and pending move
+                # Critical Section: Updating shared animation and pending move
                 with self.board_lock:
                     # Re-verify turn hasn't changed while we were processing the click
                     if self.board.turn != current_turn:
