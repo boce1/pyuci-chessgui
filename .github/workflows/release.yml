@@ -3,12 +3,13 @@ name: Release chessGUI
 on:
   push:
     tags:
-      - 'v*' # Trigger only when you push a tag starting with 'v' (e.g., v1.0)
-  workflow_dispatch: # Allows manual trigger for testing
+      - 'v*' # Triggers when you push a tag like v1.0, v2.1.4, etc.
+  workflow_dispatch: # Allows you to run this manually from the Actions tab
 
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -17,6 +18,7 @@ jobs:
           - os: windows-latest
             platform: windows
             zip_name: chessGUI-windows.zip
+
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -27,23 +29,31 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+          cache: 'pip'
 
-      - name: Install Build Tools (Linux)
+      - name: Install Linux Build Tools
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential patchelf python3-dev
+          sudo apt-get install -y build-essential patchelf python3-dev zip
 
-      - name: Setup Env & Build
+      - name: Setup Env and Build
+        shell: bash
         run: |
+          # 1. Create and activate virtual environment
           python -m venv venv
           if [ "${{ runner.os }}" = "Windows" ]; then
             source venv/Scripts/activate
           else
             source venv/bin/activate
           fi
-          pip install nuitka
-          # pip install -r requirements.txt
+
+          # 2. Install Nuitka and dependencies
+          pip install --upgrade pip
+          pip install nuitka zstandard ordered-set
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+          # 3. Run your specific Nuitka command
           python -m nuitka --standalone \
             --include-data-dir=pics=pics \
             --include-data-dir=sounds=sounds \
@@ -52,20 +62,20 @@ jobs:
             --output-dir=build_out \
             main.py
 
-      # We must zip the folder because Releases work best with single files
-      - name: Zip Artifact
+      - name: Package for Release
         shell: bash
         run: |
-          cd build_out
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            powershell Compress-Archive -Path main.dist/* -DestinationPath ../${{ matrix.zip_name }}
-          else
-            zip -r ../${{ matrix.zip_name }} main.dist/*
-          fi
+          # Go into the output directory and zip the .dist folder contents
+          cd build_out/main.dist
+          zip -r ../../${{ matrix.zip_name }} . *
 
-      - name: Upload to Release
+      - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ matrix.zip_name }}
+          # This makes the release a 'draft' until all files are uploaded
+          draft: false 
+          prerelease: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
