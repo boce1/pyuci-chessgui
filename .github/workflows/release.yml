@@ -1,0 +1,71 @@
+name: Release chessGUI
+
+on:
+  push:
+    tags:
+      - 'v*' # Trigger only when you push a tag starting with 'v' (e.g., v1.0)
+  workflow_dispatch: # Allows manual trigger for testing
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            zip_name: chessGUI-linux.zip
+          - os: windows-latest
+            platform: windows
+            zip_name: chessGUI-windows.zip
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Build Tools (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential patchelf python3-dev
+
+      - name: Setup Env & Build
+        run: |
+          python -m venv venv
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            source venv/Scripts/activate
+          else
+            source venv/bin/activate
+          fi
+          pip install nuitka
+          # pip install -r requirements.txt
+          python -m nuitka --standalone \
+            --include-data-dir=pics=pics \
+            --include-data-dir=sounds=sounds \
+            --include-data-dir=engines=engines \
+            --output-filename=chessGUI \
+            --output-dir=build_out \
+            main.py
+
+      # We must zip the folder because Releases work best with single files
+      - name: Zip Artifact
+        shell: bash
+        run: |
+          cd build_out
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            powershell Compress-Archive -Path main.dist/* -DestinationPath ../${{ matrix.zip_name }}
+          else
+            zip -r ../${{ matrix.zip_name }} main.dist/*
+          fi
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.zip_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
