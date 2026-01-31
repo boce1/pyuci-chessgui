@@ -61,12 +61,10 @@ jobs:
           if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
 
           # 4. Run Nuitka Build
-          # Added --windows-disable-console so no black box appears on Windows launch
           python -m nuitka --standalone \
             --include-data-dir=pics=pics \
             --include-data-dir=sounds=sounds \
             --include-data-dir=engines=engines \
-            --windows-disable-console \
             --output-filename=chessGUI \
             --output-dir=build_out \
             --assume-yes-for-downloads \
