@@ -10,34 +10,28 @@ class MainWindow:
         self.height = SCREEN_HEIGHT
         pg.display.set_caption("Cincinnatus GUI")
 
-        # Check OS: 'nt' is Windows, 'posix' is Linux/Mac
-        is_windows = os.name == 'nt'
+        # Open the window NORMALLY (No Hidden/Shown switching)
+        self.window = pg.display.set_mode((self.width, self.height))
 
-        # Start Hidden on Windows to avoid black flicker
-        if is_windows:
-            self.window = pg.display.set_mode((self.width, self.height), pg.HIDDEN)
-        else:
-            self.window = pg.display.set_mode((self.width, self.height))
-
-        # Draw Splash
+        # Draw the Splash Screen
         self.window.fill(BACKGROUND_COLOR)
         font = pg.font.SysFont("Consolas", 30)
         loading_text = font.render("Loading the engine...", True, BLACK)
-        self.window.blit(loading_text, (self.width // 2 - loading_text.get_width() // 2, 
-                                        self.height // 2 - loading_text.get_height() // 2))
+        text_rect = loading_text.get_rect(center=(self.width // 2, self.height // 2))
+        self.window.blit(loading_text, text_rect)
         
-        # Reveal for Windows
-        if is_windows:
-            self.window = pg.display.set_mode((self.width, self.height), pg.SHOWN)
-        
-        pg.display.update()
-
-        # The Handshake Loop (Ensures Linux/Windows both render the pixels)
-        for _ in range(15):
+        # THE CRITICAL STEP: The "Visual Lock"
+        # We must flip the display AND pump events multiple times.
+        # This forces the OS to "bake" the current pixels into the window 
+        # before the CPU gets busy with BoardView.
+        for _ in range(20):
             pg.event.pump()
-            pg.display.update()
-            pg.time.delay(10)
+            self.window.blit(loading_text, text_rect) # Keep blitting to be safe
+            pg.display.update() 
+            pg.time.delay(20) # Total delay of ~400ms
 
+        # NOW start the heavy loading
+        # The window is now "locked" with the loading text on it.
         self.board_view = BoardView()
 
     def draw(self):
