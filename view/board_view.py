@@ -168,6 +168,8 @@ class BoardView:
         pg.draw.circle(win, BLACK, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS, 3)
 
     def draw_square_in_check(self, win):
+        if self.controller.game_status != PLAYING:
+            return
         for color in [chess.WHITE, chess.BLACK]:
             king_square = self.controller.board.king(color)
             if king_square is not None and self.controller.board.is_attacked_by(not color, king_square):
