@@ -69,6 +69,7 @@ jobs:
             --windows-disable-console \
             --output-filename=chessGUI \
             --output-dir=build_out \
+            --assume-yes-for-downloads \
             main.py
 
       - name: Package for Release
