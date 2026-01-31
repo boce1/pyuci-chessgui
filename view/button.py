@@ -1,6 +1,7 @@
 from config import *
 import pygame as pg
 import os
+from controller import get_resource_path
 
 class Button:
     def __init__(self, x, y, width, height, action, text, type = DEFAULT_BUTTON):
@@ -13,10 +14,8 @@ class Button:
         self.message = self.font.render(text, True, BLACK)
         self.color = WHITE
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        pics_dir = os.path.join(current_dir, '..', 'pics')
-        pics_dir = os.path.normpath(pics_dir)
-        self.img = pg.transform.scale(pg.image.load(os.path.join(pics_dir, type)), (self.width, self.height)).convert_alpha()
+        image_path = get_resource_path(os.path.join('pics', type))
+        self.img = pg.transform.scale(pg.image.load(image_path), (self.width, self.height)).convert_alpha()
         self.img.set_alpha(150) # ((150 / 256) * 100) % transparent
 
     def draw(self, win):

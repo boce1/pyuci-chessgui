@@ -4,9 +4,11 @@ import os
 import pygame as pg
 import threading
 import time
+import sys
 from config import *
 from .search_info import SearchInfo
 from .move_animation import MoveAnimation
+from .file_path import get_resource_path
 
 class BoardController:
     def __init__(self):
@@ -55,12 +57,9 @@ class BoardController:
 
         self.get_absent_pieces()
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        sounds_dir = os.path.join(current_dir, '..', 'sounds')
-        sounds_dir = os.path.normpath(sounds_dir)
-        self.move_sound = pg.mixer.Sound(os.path.join(sounds_dir, "move.mp3"))
-        self.capture_sound = pg.mixer.Sound(os.path.join(sounds_dir, "capture.mp3"))
-        self.generic_notification_sound = pg.mixer.Sound(os.path.join(sounds_dir, "generic_notification.mp3"))
+        self.move_sound = pg.mixer.Sound(get_resource_path(os.path.join("sounds", "move.mp3")))
+        self.capture_sound = pg.mixer.Sound(get_resource_path(os.path.join("sounds", "capture.mp3")))
+        self.generic_notification_sound = pg.mixer.Sound(get_resource_path(os.path.join("sounds", "generic_notification.mp3")))
 
         self.search_info = SearchInfo()
 
@@ -81,18 +80,22 @@ class BoardController:
         self.current_search_id = 0
 
     def load_engine(self):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        engine_dir = os.path.join(current_dir, '..', 'engines')
-        engine_dir = os.path.normpath(engine_dir)
+        # Choose the filename based on the OS
+        if os.name == 'nt':  # Windows (or Wine)
+            engine_file = 'cincinnatus_windows_release.exe'
+        else:  # Linux / MacOS
+            engine_file = 'cincinnatus_linux_release'
 
-        if os.name == 'nt':  # Windows
-            engine_path = os.path.join(engine_dir, 'cincinnatus_windows_release.exe')
-        elif os.name == 'posix':  # macOS or Linux
-            engine_path = os.path.join(engine_dir, 'cincinnatus_linux_release')
-        else:
-            raise Exception("Unsupported OS")
+        # Use your helper function to find the exact path
+        # We join 'engines' and the filename
+        relative_engine_path = os.path.join('engines', engine_file)
+        engine_path = get_resource_path(relative_engine_path)
 
-        engine_path = os.path.normpath(engine_path)
+        # Double-check the file exists to prevent a silent crash
+        if not os.path.exists(engine_path):
+            raise FileNotFoundError(f"Engine not found at: {engine_path}")
+
+        # 4. Start the engine
         self.engine = engine.SimpleEngine.popen_uci(engine_path)
         print(f"Loaded engine from: {engine_path}")
 

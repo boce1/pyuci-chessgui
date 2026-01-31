@@ -1,6 +1,6 @@
 from config import *
 import pygame as pg
-from controller import BoardController
+from controller import BoardController, get_resource_path
 import os
 import chess
 from .promotion_table_view import PromotionTableView
@@ -39,19 +39,27 @@ class BoardView:
         self.change_side_button = Button(CHANGE_SIDE_BUTTON_X, CHANGE_SIDE_BUTTON_Y, CHANGE_SIDE_BUTTON_WIDTH, CHANGE_SIDE_BUTTON_HEIGHT, self.controller.change_board_orientation, "Change side")
 
     def load_pictures(self):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        pics_dir = os.path.normpath(os.path.join(current_dir, '..', 'pics'))
-        
+        # Mapping of piece symbols to filenames
         mapping = {
             'P': "white-pawn.png", 'N': "white-knight.png", 'B': "white-bishop.png",
             'R': "white-rook.png", 'Q': "white-queen.png", 'K': "white-king.png",
             'p': "black-pawn.png", 'n': "black-knight.png", 'b': "black-bishop.png",
             'r': "black-rook.png", 'q': "black-queen.png", 'k': "black-king.png"
         }
-        
+
         for symbol, filename in mapping.items():
-            path = os.path.join(pics_dir, filename)
-            self.pieces_images[symbol] = pg.transform.scale(pg.image.load(path), (PIECE_SIZE, PIECE_SIZE)).convert_alpha() # type: ignore
+            # Use the helper to get the absolute path to the image
+            # It handles 'pics/' vs '../pics/'
+            path = get_resource_path(os.path.join('pics', filename))
+
+            # Safety check: avoid crashing if a file is missing
+            if not os.path.exists(path):
+                print(f"Warning: Missing image for {symbol} at {path}")
+                continue
+
+            # Load, scale, and convert
+            img = pg.image.load(path)
+            self.pieces_images[symbol] = pg.transform.scale(img, (PIECE_SIZE, PIECE_SIZE)).convert_alpha()
 
     def draw(self, win):
         # 1. Background and Board Structure
@@ -168,8 +176,6 @@ class BoardView:
         pg.draw.circle(win, BLACK, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS, 3)
 
     def draw_square_in_check(self, win):
-        if self.controller.game_status != PLAYING:
-            return
         for color in [chess.WHITE, chess.BLACK]:
             king_square = self.controller.board.king(color)
             if king_square is not None and self.controller.board.is_attacked_by(not color, king_square):

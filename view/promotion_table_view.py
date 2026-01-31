@@ -1,6 +1,7 @@
 import pygame as pg
 import os
 import chess
+from controller import get_resource_path
 from config import *
 
 class PromotionTableView:
@@ -9,10 +10,7 @@ class PromotionTableView:
         self.load_resources()
 
     def load_resources(self):
-        """Standardized resource loading."""
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        pics_dir = os.path.normpath(os.path.join(current_dir, '..', 'pics'))
-
+        """Standardized resource loading using the universal path helper."""
         # Pieces used in promotion
         mapping = {
             'Q': "white-queen.png", 'R': "white-rook.png", 
@@ -22,7 +20,15 @@ class PromotionTableView:
         }
 
         for symbol, filename in mapping.items():
-            path = os.path.join(pics_dir, filename)
+            # 1. Use the helper for absolute pathing
+            path = get_resource_path(os.path.join('pics', filename))
+
+            # 2. Check if file exists to avoid Pygame errors
+            if not os.path.exists(path):
+                print(f"Error: Promotion image missing at {path}")
+                continue
+
+            # 3. Load, convert, and scale
             img = pg.image.load(path).convert_alpha()
             self.pieces_promotion_images[symbol] = pg.transform.scale(
                 img, (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT)

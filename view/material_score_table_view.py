@@ -1,5 +1,6 @@
 import pygame as pg
 import os
+from controller import get_resource_path
 from config import *
 
 class MaterialScoreTableView:
@@ -13,10 +14,7 @@ class MaterialScoreTableView:
         self.load_resources()
 
     def load_resources(self):
-        """Data-driven loading similar to BoardView."""
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        pics_dir = os.path.normpath(os.path.join(current_dir, '..', 'pics'))
-
+        """Data-driven loading using the universal resource path helper."""
         # Mapping symbols to filenames
         mapping = {
             'P': "white-pawn.png",   'N': "white-knight.png", 'B': "white-bishop.png",
@@ -25,7 +23,7 @@ class MaterialScoreTableView:
             'r': "black-rook.png",   'q': "black-queen.png"
         }
 
-        # Mapping symbols to Y coordinates (X is constant)
+        # Mapping symbols to Y coordinates
         y_coords = {
             'P': MATERIAL_WHITE_PAWN_Y,   'N': MATERIAL_WHITE_KNIGHT_Y, 
             'B': MATERIAL_WHITE_BISHOP_Y, 'R': MATERIAL_WHITE_ROOK_Y, 
@@ -36,12 +34,20 @@ class MaterialScoreTableView:
         }
 
         for symbol, filename in mapping.items():
-            path = os.path.join(pics_dir, filename)
-            # Load and scale
+            # Get the path using the helper
+            path = get_resource_path(os.path.join('pics', filename))
+
+            # Safety check: avoid crashing if a file is missing
+            if not os.path.exists(path):
+                print(f"Warning: Missing material icon for {symbol} at {path}")
+                continue
+
+            #  Load, convert, and scale
             img = pg.image.load(path).convert_alpha()
             self.pieces_material_images[symbol] = pg.transform.scale(
                 img, (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)
             )
+
             # Store coordinates
             self.piece_img_coords[symbol] = (MATERIAL_SCORE_X, y_coords[symbol])
 
