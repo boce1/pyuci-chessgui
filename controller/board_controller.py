@@ -396,6 +396,9 @@ class BoardController:
             with self.board_lock: # Protect status change
                 self.update_game_status()
                 self.generic_notification_sound.play()
+                self.source_square_display = None
+                self.target_square_display = None
+                self.legal_moves_for_source_square = []
 
     def update_game_status(self):
         # called when pushing and it doesnt need lock here
