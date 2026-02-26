@@ -1,7 +1,7 @@
 from config import *
 import pygame as pg
 import threading
-import os
+from controller.file_path import *
 from .board_view import BoardView
 
 class MainWindow:
@@ -14,6 +14,14 @@ class MainWindow:
         # Create window immediately
         self.window = pg.display.set_mode((self.width, self.height))
         
+        # Load the image and set it as the icon
+        icon_path = get_resource_path(os.path.join("pics", "icon.png"))
+        try:
+            icon_surface = pg.image.load(icon_path)
+            pg.display.set_icon(icon_surface)
+        except pg.error:
+            print(f"Could not find icon at {icon_path}")
+
         # Setup loading state
         self.board_view = None
         self.loading_finished = threading.Event()
@@ -27,6 +35,10 @@ class MainWindow:
         # The "Stay Alive" Loop
         # This keeps the splash screen drawing while the thread works
         self._run_splash()
+
+        raw_img = pg.image.load(get_resource_path(os.path.join("pics", "texture-background.bmp")))
+        converted_img = raw_img.convert()
+        self.background = pg.transform.scale(converted_img, (SCREEN_WIDTH, SCREEN_HEIGHT))  
 
     def _load_task(self):
         """This runs in the background. No pg.display calls allowed here"""
@@ -60,7 +72,8 @@ class MainWindow:
             clock.tick(FPS)
 
     def draw(self):
-        self.window.fill(BACKGROUND_COLOR)
+        # self.window.fill(BACKGROUND_COLOR)
+        self.window.blit(self.background, (0, 0))
         self.board_view.draw(self.window)
         pg.display.update()  # Update the display
 

@@ -70,6 +70,8 @@ jobs:
             --output-dir=build_out \
             --assume-yes-for-downloads \
             --windows-disable-console \
+            --windows-icon-from-ico=pics/icon.ico \
+            --linux-icon=pics/icon.png \
             main.py
 
       - name: Package for Release

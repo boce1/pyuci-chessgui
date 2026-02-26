@@ -165,15 +165,15 @@ class BoardView:
             r_text = self.font.render(rank_char, True, FONT_COLOR)
             
             idx = i if self.controller.white_on_bottom else (7 - i)
-            win.blit(f_text, (BOARD_X + idx * SQUARE_SIZE + SQUARE_SIZE // 2 - f_text.get_width() // 2, BOARD_Y + BOARD_HEIGHT))
+            win.blit(f_text, (BOARD_X + idx * SQUARE_SIZE + SQUARE_SIZE // 2 - f_text.get_width() // 2, BOARD_Y + BOARD_HEIGHT - f_text.get_height() // 8))
             
             idy = i if self.controller.white_on_bottom else (7 - i)
-            win.blit(r_text, (BOARD_X - r_text.get_width() - 5, BOARD_Y + idy * SQUARE_SIZE + SQUARE_SIZE // 2 - r_text.get_height() // 2))
+            win.blit(r_text, (BOARD_X - r_text.get_width() * 4 // 3, BOARD_Y + idy * SQUARE_SIZE + SQUARE_SIZE // 2 - r_text.get_height() // 2))
 
     def draw_circle_indicating_turn(self, win):
         color = WHITE if self.controller.board.turn == chess.WHITE else BLACK
         pg.draw.circle(win, color, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS)
-        pg.draw.circle(win, BLACK, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS, 3)
+        pg.draw.circle(win, BLACK, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS, 2)
 
     def draw_square_in_check(self, win):
         for color in [chess.WHITE, chess.BLACK]:
@@ -192,6 +192,6 @@ class BoardView:
                 pg.draw.rect(win, RED, (BOARD_X + col * SQUARE_SIZE, BOARD_Y + row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE), 5)
 
     def draw_board_background(self, win):
-        margin = 20
+        margin = 22
         rect = (BOARD_X - margin, BOARD_Y - margin, BOARD_WIDTH + 2*margin, BOARD_HEIGHT + 2*margin)
         pg.draw.rect(win, WHITE, rect)

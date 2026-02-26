@@ -28,5 +28,5 @@ class TimeView:
         win.blit(black_time, (TIME_INFO_X + TIME_INFO_CELL_WIDTH + TIME_INFO_CELL_WIDTH // 2 - black_time.get_width() // 2,
                                TIME_INFO_Y + TIME_INFO_HEIGHT // 2 - white_time.get_height() // 2))
 
-        pg.draw.line(win, BLACK, (TIME_INFO_X + TIME_INFO_CELL_WIDTH, TIME_INFO_Y), (TIME_INFO_X + TIME_INFO_CELL_WIDTH, TIME_INFO_Y + TIME_INFO_HEIGHT - 1), 3)
-        pg.draw.rect(win, BLACK, (TIME_INFO_X, TIME_INFO_Y, TIME_INFO_WIDTH, TIME_INFO_HEIGHT), 5)
+        pg.draw.line(win, BLACK, (TIME_INFO_X + TIME_INFO_CELL_WIDTH, TIME_INFO_Y), (TIME_INFO_X + TIME_INFO_CELL_WIDTH, TIME_INFO_Y + TIME_INFO_HEIGHT - 1), 1)
+        pg.draw.rect(win, BLACK, (TIME_INFO_X, TIME_INFO_Y, TIME_INFO_WIDTH, TIME_INFO_HEIGHT), 3)
