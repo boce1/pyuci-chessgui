@@ -31,6 +31,8 @@ class GameStatusView:
             self.message = self.draw_insufficient_material
         elif game_status == STALEMATE:
             self.message = self.draw_stalemate
+        elif game_status == ENGINE_ILLEGAL_MOVE:
+            self.message = self.font.render("Not enought time. Engine suggested illegal move", True, BLACK)
 
         # pg.draw.rect(win, BLACK, (GAME_STATUS_X, GAME_STATUS_Y, GAME_STATUS_WIDTH, GAME_STATUS_HEIGHT), 1)
         win.blit(self.message, (GAME_STATUS_X + GAME_STATUS_WIDTH // 2 - self.message.get_width() // 2,

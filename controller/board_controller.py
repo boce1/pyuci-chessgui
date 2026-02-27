@@ -332,12 +332,13 @@ class BoardController:
                             break
                         self.search_info.update(info)    
                 
-                try:
-                    result = analysis.wait()
-                except (chess.engine.EngineError, chess.InvalidMoveError) as e:
-                    print(f"Engine returned an invalid move or protocol error: {e}")
+                result = analysis.wait()
+                if result.move not in board_copy.legal_moves:
+                    with self.board_lock:
+                        self.game_status = ENGINE_ILLEGAL_MOVE
+                        print(f"Engine suggested illegal move: {result.move}")
                     return
-    
+                
                 if result.move:
                     with self.board_lock:
                         if self.is_force_quit_engine or self.game_status != PLAYING:
@@ -415,6 +416,9 @@ class BoardController:
             self.game_status = TIME_PASSED_WHITE
         elif self.black_clock == 0:
             self.game_status = TIME_PASSED_BLACK
+
+        # If the engine gives illegal move, the game status is set to ENGINE_ILLEGAL_MOVE, and it can only be changed by stopping and playing again.
+        # It is handled in procces_animation_and_push_move, because it cant be checked here because chess library raise exception
 
     def stop_game(self):
         with self.board_lock:
