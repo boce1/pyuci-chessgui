@@ -66,6 +66,7 @@ jobs:
             --include-data-dir=sounds=sounds \
             --include-data-files=engines/*.exe=engines/ \
             --include-data-files=engines/*linux*=engines/ \
+            --include-data-files=nn-04cf2b4ed1da.nnue=nn-04cf2b4ed1da.nnue \
             --output-filename=chessGUI \
             --output-dir=build_out \
             --assume-yes-for-downloads \
