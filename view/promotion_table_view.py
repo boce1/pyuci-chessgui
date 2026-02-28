@@ -30,7 +30,7 @@ class PromotionTableView:
 
             # 3. Load, convert, and scale
             img = pg.image.load(path).convert_alpha()
-            self.pieces_promotion_images[symbol] = pg.transform.scale(
+            self.pieces_promotion_images[symbol] = pg.transform.smoothscale(
                 img, (PROMOTION_TABLE_CELL_WIDTH, PROMOTION_TABLE_CELL_HEIGHT)
             )
 

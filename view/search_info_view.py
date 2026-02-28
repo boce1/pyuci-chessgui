@@ -8,10 +8,27 @@ class SearchInfoView:
         self.font_size = int(SQUARE_SIZE * 0.3)
         self.font = pg.font.SysFont('Consolas', self.font_size, bold=False)
 
+    def draw_box(self, win):
+        # Define the inner gap (twice smaller than GAP_INFO)
+        sg = GAP_INFO // 2
+        x, y, w, h = SEARCH_INFO_X, SEARCH_INFO_Y, SEARCH_INFO_WIDTH, SEARCH_INFO_HEIGHT
+
+        # Draw the inner border (to connect the lines to)
+        pg.draw.rect(win, GRAY, (SEARCH_INFO_X, SEARCH_INFO_Y, SEARCH_INFO_WIDTH, SEARCH_INFO_HEIGHT), sg)
+        pg.draw.rect(win, BLACK, (x + sg, y + sg, w - 2 * sg, h - 2 * sg), 2)
+
+        # Draw Corner Lines (Outer to Inner)
+        # Using the -1/+1 offset to prevent the lines from poking through the outer border
+        pg.draw.line(win, BLACK, (x + 1, y + 1), (x + sg, y + sg), 2) # Top-Left
+        pg.draw.line(win, BLACK, (x + w - 1, y + 1), (x + w - sg, y + sg), 2) # Top-Right
+        pg.draw.line(win, BLACK, (x + 1, y + h - 1), (x + sg, y + h - sg), 2) # Bottom-Left
+        pg.draw.line(win, BLACK, (x + w - 1, y + h - 1), (x + w - sg, y + h - sg), 2) # Bottom-Right
+
     def draw(self, win, search_info):
         pg.draw.rect(win, WHITE, (SEARCH_INFO_X, SEARCH_INFO_Y, SEARCH_INFO_WIDTH, SEARCH_INFO_HEIGHT))
+        self.draw_box(win)
         pg.draw.rect(win, BLACK, (SEARCH_INFO_X, SEARCH_INFO_Y, SEARCH_INFO_WIDTH, SEARCH_INFO_HEIGHT), 2)
-        
+
         current_y = SEARCH_INFO_Y + GAP_INFO
         max_w = SEARCH_INFO_WIDTH - (GAP_INFO * 2)
 

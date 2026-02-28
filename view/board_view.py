@@ -38,6 +38,9 @@ class BoardView:
         self.ten_minutes_button = Button(TIME_BUTTON_3_X, TIME_BUTTON_3_Y, TIME_BUTTON_3_WIDTH, TIME_BUTTON_3_HEIGHT, self.controller.set_time_10_minutes, "10 minutes")
         self.change_side_button = Button(CHANGE_SIDE_BUTTON_X, CHANGE_SIDE_BUTTON_Y, CHANGE_SIDE_BUTTON_WIDTH, CHANGE_SIDE_BUTTON_HEIGHT, self.controller.change_board_orientation, "Change side")
 
+        self.white_indicator = self.create_smooth_indicator(WHITE)
+        self.black_indicator = self.create_smooth_indicator(BLACK)
+
     def load_pictures(self):
         # Mapping of piece symbols to filenames
         mapping = {
@@ -59,7 +62,7 @@ class BoardView:
 
             # Load, scale, and convert
             img = pg.image.load(path)
-            self.pieces_images[symbol] = pg.transform.scale(img, (PIECE_SIZE, PIECE_SIZE)).convert_alpha()
+            self.pieces_images[symbol] = pg.transform.smoothscale(img, (PIECE_SIZE, PIECE_SIZE)).convert_alpha()
 
     def draw(self, win):
         # 1. Background and Board Structure
@@ -150,13 +153,28 @@ class BoardView:
             win.blit(anim_img, (anim.current_pos.x + offset, anim.current_pos.y + offset))
 
 
+    def _create_move_indicator(self):
+        n = 4
+        temp_size = SQUARE_SIZE * n
+        surf = pg.Surface((temp_size, temp_size), pg.SRCALPHA)
+
+        pg.draw.circle(surf, HIGHLIGHT_COLOR, (temp_size // 2, temp_size // 2), 
+                       (SQUARE_SIZE // 2) * n, (SQUARE_SIZE // 15) * n)
+    
+        return pg.transform.smoothscale(surf, (SQUARE_SIZE, SQUARE_SIZE))
+
     def draw_legal_moves_for_source_square(self, win):
         for move in self.controller.legal_moves_for_source_square:
             to_square = move.to_square
             rank, file = to_square // 8, to_square % 8
             row, col = (7 - rank, file) if self.controller.white_on_bottom else (rank, 7 - file)
-            center = (BOARD_X + col * SQUARE_SIZE + SQUARE_SIZE // 2, BOARD_Y + row * SQUARE_SIZE + SQUARE_SIZE // 2)
-            pg.draw.circle(win, HIGHLIGHT_COLOR, center, SQUARE_SIZE // 2, SQUARE_SIZE // 15)
+            # center = (BOARD_X + col * SQUARE_SIZE + SQUARE_SIZE // 2, BOARD_Y + row * SQUARE_SIZE + SQUARE_SIZE // 2)
+            # pg.draw.circle(win, HIGHLIGHT_COLOR, center, SQUARE_SIZE // 2, SQUARE_SIZE // 15)
+            x = BOARD_X + col * SQUARE_SIZE
+            y = BOARD_Y + row * SQUARE_SIZE
+    
+            indicator = self._create_move_indicator()
+            win.blit(indicator, (x, y))
 
     def show_files_ranks(self, win):
         for i in range(8):
@@ -170,10 +188,28 @@ class BoardView:
             idy = i if self.controller.white_on_bottom else (7 - i)
             win.blit(r_text, (BOARD_X - r_text.get_width() * 4 // 3, BOARD_Y + idy * SQUARE_SIZE + SQUARE_SIZE // 2 - r_text.get_height() // 2))
 
+    def create_smooth_indicator(self, fill_color):
+        # Create a surface 4x larger for super-sampling
+        temp_size = TURN_INDICATOR_RADIUS * 8 # Diameter * 4
+        surf = pg.Surface((temp_size, temp_size), pg.SRCALPHA)
+        center = temp_size // 2
+        # Draw the main filled circle (scaled up)
+        pg.draw.circle(surf, fill_color, (center, center), TURN_INDICATOR_RADIUS * 4)
+        # Draw the Black border (scaled up)
+        # We use a thickness of 8 because 2 * 4 = 8
+        pg.draw.circle(surf, BLACK, (center, center), TURN_INDICATOR_RADIUS * 4, 8)
+        # Smoothly scale down to the target size
+        return pg.transform.smoothscale(surf, (TURN_INDICATOR_RADIUS * 2, TURN_INDICATOR_RADIUS * 2))
+
     def draw_circle_indicating_turn(self, win):
-        color = WHITE if self.controller.board.turn == chess.WHITE else BLACK
-        pg.draw.circle(win, color, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS)
-        pg.draw.circle(win, BLACK, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS, 2)
+        # color = WHITE if self.controller.board.turn == chess.WHITE else BLACK
+        # pg.draw.circle(win, color, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS)
+        # pg.draw.circle(win, BLACK, (TURN_INDICATOR_X, TURN_INDICATOR_Y), TURN_INDICATOR_RADIUS, 2)
+        top_left = (TURN_INDICATOR_X - TURN_INDICATOR_RADIUS, 
+                TURN_INDICATOR_Y - TURN_INDICATOR_RADIUS)
+    
+        indicator = self.white_indicator if self.controller.board.turn == chess.WHITE else self.black_indicator
+        win.blit(indicator, top_left)
 
     def draw_square_in_check(self, win):
         for color in [chess.WHITE, chess.BLACK]:

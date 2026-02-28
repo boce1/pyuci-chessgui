@@ -44,7 +44,7 @@ class MaterialScoreTableView:
 
             #  Load, convert, and scale
             img = pg.image.load(path).convert_alpha()
-            self.pieces_material_images[symbol] = pg.transform.scale(
+            self.pieces_material_images[symbol] = pg.transform.smoothscale(
                 img, (MATERIAL_SCORE_WIDTH, MATERIAL_SCORE_WIDTH)
             )
 
