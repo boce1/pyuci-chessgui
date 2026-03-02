@@ -22,6 +22,8 @@ class BoardController:
         # fen = stalemate
         # fen = white_rook_promotion
         # fen = black_rook_promotion
+        # fen = white_rook_only
+        # fen = black_rook_only
         self.board = chess.Board(fen)
         self.engine = None
         self.load_engine()
@@ -412,6 +414,8 @@ class BoardController:
             self.game_status = STALEMATE
         elif self.board.is_insufficient_material():
             self.game_status = INSUFFICIENT_MATERIAL
+        elif self.board.is_repetition(3):
+            self.game_status = THREEFOLD_REPETITION
         elif self.white_clock == 0:
             self.game_status = TIME_PASSED_WHITE
         elif self.black_clock == 0:
@@ -531,8 +535,7 @@ class BoardController:
         else:
             self.move_sound.play()
         
-        if self.game_status in (CHECKMATE_BY_WHITE, CHECKMATE_BY_BLACK, STALEMATE, 
-                                INSUFFICIENT_MATERIAL, TIME_PASSED_WHITE, TIME_PASSED_BLACK):
+        if self.game_status not in (PLAYING, GAME_PAUSED):
             self.generic_notification_sound.play()
 
 

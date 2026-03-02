@@ -12,3 +12,6 @@ stalemate = "7k/5Q2/6K1/8/8/8/8/r7 b - - 0 1"
 
 white_rook_promotion = "4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1"
 black_rook_promotion = "r3k2r/8/8/8/8/8/8/4K3 b kq - 0 1"
+
+white_rook_only = "8/k7/8/8/8/8/8/1R3K2 w KQ - 0 1"
+black_rook_only = "8/K7/8/8/8/8/8/1r3k2 w kq - 0 1"

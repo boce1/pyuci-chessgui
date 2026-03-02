@@ -12,6 +12,8 @@ class GameStatusView:
         self.draw_stalemate = self.font.render("Draw by Stalemate", True, BLACK)
         self.checkmate_white = self.font.render("White won. Checkmate", True, BLACK)
         self.checkmate_black = self.font.render("Black won. Checkmate", True, BLACK)
+        self.illegal_move_message = self.font.render("Not enought time. Engine suggested illegal move", True, BLACK)
+        self.threefold_repetition_message = self.font.render("Draw by Threefold Repetition", True, BLACK)
         self.message = None
 
     def draw(self, win, game_status):
@@ -32,7 +34,9 @@ class GameStatusView:
         elif game_status == STALEMATE:
             self.message = self.draw_stalemate
         elif game_status == ENGINE_ILLEGAL_MOVE:
-            self.message = self.font.render("Not enought time. Engine suggested illegal move", True, BLACK)
+            self.message = self.illegal_move_message
+        elif game_status == THREEFOLD_REPETITION:
+            self.message = self.threefold_repetition_message
 
         # pg.draw.rect(win, BLACK, (GAME_STATUS_X, GAME_STATUS_Y, GAME_STATUS_WIDTH, GAME_STATUS_HEIGHT), 1)
         win.blit(self.message, (GAME_STATUS_X + GAME_STATUS_WIDTH // 2 - self.message.get_width() // 2,
