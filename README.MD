@@ -58,9 +58,12 @@ The source code of the engine: https://github.com/boce1/cincinnatus.git
 
 ### Refrences
 
-- The sound effects are from `Lichess` - https://github.com/lichess-org/lila/tree/master/public/sound
-- The `NNUE probe` used to integrate `Stockfish NNUE` - https://github.com/dshawul/nnue-probe
-- PNGs for pieces - https://greenchess.net/info.php?item=downloads
+## References
+
+- **Application Icon:** "Caesar icon" by [Delapouite](https://game-icons.net/1x1/delapouite/caesar.html) is licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
+- **Chess Piece Icons:** PNGs provided by [Green Chess](https://greenchess.net/info.php?item=downloads) are licensed under [CC BY-SA](https://creativecommons.org/licenses/by-sa/3.0/).
+- **Sound effects:** From [Lichess](https://github.com/lichess-org/lila/tree/master/public/sound) (Licensed under [GPL-3.0 or later](https://github.com/lichess-org/lila/blob/master/COPYING.md)).
+
 
 # Executables
 
