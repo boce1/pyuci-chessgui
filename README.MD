@@ -62,7 +62,7 @@ The source code of the engine: https://github.com/boce1/cincinnatus.git
 
 - **Application Icon:** "Caesar icon" by [Delapouite](https://game-icons.net/1x1/delapouite/caesar.html) is licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 - **Chess Piece Icons:** PNGs provided by [Green Chess](https://greenchess.net/info.php?item=downloads) are licensed under [CC BY-SA](https://creativecommons.org/licenses/by-sa/3.0/).
-- **Sound effects:** From [Lichess](https://github.com/lichess-org/lila/tree/master/public/sound) (Licensed under [GPL-3.0 or later](https://github.com/lichess-org/lila/blob/master/COPYING.md)).
+- **Sound effects:** From [Lichess](https://github.com/lichess-org/lila/tree/master/public/sound) (Licensed under [AGPL-3.0]
 
 
 # Executables
