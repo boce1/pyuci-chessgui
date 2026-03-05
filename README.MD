@@ -76,7 +76,12 @@ You can find the latest compiled binaries (EXE) and the source code in the [Rele
 
 This GUI communicate with the chess engine with UCI protocol. It sends UCI command, the engine calculates the tree of game states and give the best move. Engine also gives useful information about search like Principal Variation table at the current depth, evalauated score for the board and the depth of the search. At the beggining of the game depth is ussually 8 to 10, at the eng game can go to 30.
 
-Modern chess GUIs can modify the time for the game, moves to go and increment seconds for move. The idea for this gui is not to test other engines and do tournaments with them but to demonstrate how Cincinnatus work.
+
+Modern chess GUIs like Arena, CuteChess, LucasChess can modify the time for the game, moves to go and increment seconds for move. This gui can't do that. The idea for this gui is not to test other engines and do tournaments with them but to demonstrate how Cincinnatus egnine work.
+
+
+Note: Engine is backend of a chess simulator. It's called engine because, chess bots are made such that they can be pluged and play for every GUI. The engine and GUI communicate using protocol. The most popular are UCI and xboard.
+
 
 User can choose between 1, 5 and 10 minutes game. User can change sides. It's important to point that the time and side can be change when game isn't in progress. 
 
