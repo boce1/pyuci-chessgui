@@ -56,8 +56,6 @@ This chess gui is cross-platform compatible.
 
 The source code of the engine: https://github.com/boce1/cincinnatus.git
 
-### Refrences
-
 ## References
 
 - **Application Icon:** "Caesar icon" by [Delapouite](https://game-icons.net/1x1/delapouite/caesar.html) is licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
@@ -73,6 +71,7 @@ You can find the latest compiled binaries (EXE) and the source code in the [Rele
 
 # The GUI
 ![gui screenshot](pics/gui.png)
+![gui screenshot 2](pics/gui_promotion_demo.png)
 
 This GUI communicate with the chess engine with UCI protocol. It sends UCI command, the engine calculates the tree of game states and give the best move. Engine also gives useful information about search like Principal Variation table at the current depth, evalauated score for the board and the depth of the search. At the beggining of the game depth is ussually 8 to 10, at the eng game can go to 30.
 
