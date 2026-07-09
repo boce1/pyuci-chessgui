@@ -1,6 +1,8 @@
 # Cincinnatus GUI
 
 This is graphical user interface for the **Cincinnatus chess engine**. This tool provides a streamlined, user-friendly layer to interact with the engine's core capabilities using a native Python-based interface.
+
+### This project is my theses for my bachelor degree
 ---
 
 ## Configuration & Setup
